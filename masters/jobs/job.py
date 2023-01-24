@@ -13,6 +13,4 @@ def update_notification_status():
             if notification.start_time >= current_time:
                 notification.status = 'Active'
                 notification.save()
-        else:
-            pass
 
