@@ -25,6 +25,7 @@ from django.test import Client
 import json
 # from rijndael.cipher.crypt import new
 # from rijndael.cipher.blockcipher import MODE_CBC, IV, BLOCKSIZE
+from masters.models import ModeOfPayment
 
 class CustomPageNumberPagination(PageNumberPagination):
     page_size = 1
@@ -934,3 +935,24 @@ def temp_job_creator_for_driver(driver_username = 'd1001', password = '1111'):
             }
             response = client.post(url_ssign_vehicle_for_service_request, data = data, format = 'json', **{'HTTP_AUTHORIZATION': f'Bearer {gtcc_user_token}'},follow = True)
             print(f'Response status for job assign to driver is {response.status_code}')
+
+
+def initiate_mode_of_payments():
+    m1 = ModeOfPayment.objects.create(
+        mop_id = '1001',
+        mode_of_payment = "Online Payment",
+        is_editable = False,
+        created_by_id = 1,
+    )
+    m2 = ModeOfPayment.objects.create(
+        mop_id = '1002',
+        mode_of_payment = "DO Adjustment",
+        is_editable = False,
+        created_by_id = 1,
+    )
+    m3 = ModeOfPayment.objects.create(
+        mop_id = '1003',
+        mode_of_payment = "Credit Refund",
+        is_editable = False,
+        created_by_id = 1,
+    )
