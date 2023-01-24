@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+        @page {
+            size: a4 landscape;
+            @frame header_frame {           /* Static Frame */
+                -pdf-frame-content: header_content; 
+                left: 10pt; width: 632pt; top: 10pt; height: 40pt;
+            }
+            @frame content_frame {          /* Content Frame */
+                left: 10pt; width: 820pt; top: 55pt; height: 520pt;
+            }
+            @frame footer_frame {           /* Another static Frame */
+                -pdf-frame-content: footer_content;
+                left: 50pt; width: 100pt; top: 580pt; height: 20pt; 
+            }
+
+        }
+        .table {
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 5px;
+            background-color: #fff;
+            
+        }
+
+        .table th,
+        .table td {
+            padding: 5px;
+            vertical-align: top;
+            border-top: 1px solid #000;
+            text-align: center;
+            font-size: 8px;
+            color:"dark-gray";
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #000;
+            font-weight:"bold";
+        }
+
+        .table tbody + tbody {
+            border-top: 2px solid #000;
+        }
+
+        .table .table {
+            background-color: #fff;
+        }
+        thead {display: table-header-group;}
+
+        #pageFooter {
+            display: table-footer-group;
+        }
+        
+        #pageFooter:after {
+            counter-increment: page;
+            content: counter(page);
+        }
+      
+    </style>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="header_content">
+        <img width="100" height="15" 
+        src="logo-light.png"/>
+       <br/> Access Control Event Report
+    </div>
+    <div id="footer_content">
+        Footer   - Page No: <pdf:pagenumber> of <pdf:pagecount>
+    </div>
+
+        {% comment %} <h1>Halo</h1> {% endcomment %}
+    <table class="table">
+        <thead>
+      <tr>
+        {% for col in df.columns %}
+            <th>{{ col }}</th>
+        {% endfor %}
+      </tr>
+      {% for index, row in df.iterrows %}
+        <tr>
+          {% for cell in row %}
+            <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
