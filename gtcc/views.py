@@ -1173,19 +1173,18 @@ class OperatorDumpingAcceptanceView(APIView):
                     log                 = f"This job has been discharged by Mr.{request.user.full_name}",
                     created_by          = request.user
                 )
-            
-            jobs = allJobs_list_of_driver_for_operator(vehicle_entry_details.id)
-            vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
-            data = {
-                        'vehicle_details'   : vehicle_details,
-                        'jobs'              : jobs
-                    }
         vehicle_entry_details.operator              = request.user   
         vehicle_entry_details.operator_acceptance   = data['operator_acceptance']
         vehicle_entry_details.exit_time             = timezone.now()
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
         vehicle_entry_details.save()
+        jobs = allJobs_list_of_driver_for_operator(vehicle_entry_details.id)
+        vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
+        data = {
+                    'vehicle_details'   : vehicle_details,
+                    'jobs'              : jobs
+                }
         return Response(data, status=status.HTTP_200_OK)
 
 #Dashboard API
