@@ -577,26 +577,44 @@ class ConvertCouponToSR(APIView):
 
     @transaction.atomic
     def post(self, request):
-        coupon_id        = request.data.get('coupon_id', None)
-        total_gallons    = request.data.get('total_gallons', None)
-        converted_on    = request.data.get('converted_on', None)
+        coupon_id               = request.data.get('coupon_id', None)
+        total_gallons           = request.data.get('total_gallons', None)
+        service_request_date    = request.data.get('service_request_date', None)
         if coupon_id == None:
             return Response({'error' : 'Coupon id is required'}, status=status.HTTP_400_BAD_REQUEST)
         if total_gallons == None:
             return Response({'error' : 'Total gallons is required'}, status=status.HTTP_400_BAD_REQUEST)
-        if converted_on == None:
-            return Response({'error' : 'Converted on is required'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer =  ServiceRequestPostSerializer(data = request.data)
+        if service_request_date == None:
+            return Response({'error' : 'Service request date is required'}, status=status.HTTP_400_BAD_REQUEST)
+        coupon                  = self.get_coupon(coupon_id)
+        dumping_vehicledetails  = coupon.dumping_vehicledetails
+        vehicle                 = dumping_vehicledetails.vehicle
+        driver                  = dumping_vehicledetails.driver
+        operator                = dumping_vehicledetails.operator
+        serializer =  ServiceRequestPostSerializer(
+                            data                    = request.data,
+                            vehicle                 = vehicle,
+                            driver                  = driver,
+                            operator                = operator,
+                            dumping_vehicledetails  = dumping_vehicledetails,
+                            created_by              = request.user,
+                            collection_completion_time = service_request_date,
+                            created_date                = service_request_date,
+                            status                      = 'Discharged',
+                            initiator                   = 'CPN',
+                            sr_grease_trap_status       = 'Completed'
+                        )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        coupon  = self.get_coupon(coupon_id)
         if coupon.status != 'Used':
             return Response({'error' : 'Only used coupons can be converted'}, status=status.HTTP_400_BAD_REQUEST)
         if total_gallons != coupon.total_gallons:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
+        if service_request_date >= coupon.returned_on:
+            return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
         service_request    = serializer.save(created_by = request.user)
 
-        coupon.converted_on     = converted_on
+        coupon.converted_on     = timezone.now()
         coupon.converted_by     = request.user
         coupon.service_request  = service_request
         coupon.status           = 'Converted'

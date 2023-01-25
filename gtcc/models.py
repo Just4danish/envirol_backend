@@ -132,7 +132,7 @@ class AccessControlLog(models.Model):
     operator = models.ForeignKey(Account, related_name='accesscontrollog_operator', on_delete=models.CASCADE, null=True)
     rfid_card = models.ForeignKey('masters.RFIDCard', related_name='accesscontrollog_rfid', on_delete=models.CASCADE, null=True)
     accessed_gate = models.ForeignKey('masters.Gate', related_name='gate_vehicledetail', on_delete=models.CASCADE)
-    status_choice = [("Entered","Entered"),("Approved","Approved"),("Rejected","Rejected"),("Dumped","Dumped"),("Exited","Exited")]
+    status_choice = [("Entered","Entered"),("Approved","Approved"),("Rejected","Rejected"),("Discharged","Discharged"),("Exited","Exited")]
     status = models.CharField(max_length=10, choices=status_choice,null=True)
     accessed_time = models.DateTimeField(auto_now_add=True)
     direction_choice = [("Entry","Entry"),("Exit","Exit")]
@@ -148,6 +148,7 @@ class VehicleEntryDetails(models.Model):
     total_gallon_collected = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     total_dumping_fee = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     total_gallon_dumped = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    operator = models.ForeignKey(Account, on_delete=models.CASCADE, null=True)
     operator_acceptance_choice = [("Pending","Pending"),("Accepted","Accepted"),("Rejected","Rejected")]
     operator_acceptance = models.CharField(max_length=10, choices=operator_acceptance_choice, default='Pending')
     remarks = models.TextField(null=True)

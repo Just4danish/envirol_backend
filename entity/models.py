@@ -144,10 +144,11 @@ class ServiceRequest(models.Model):
     foodwatch_srid = models.CharField(max_length=100, null=True)
     created_by = models.ForeignKey(Account, related_name='service_request_created_by', null=True, blank = True, on_delete=models.CASCADE)
     collection_completion_time = models.DateTimeField(null=True)
+    discharge_time = models.DateTimeField(null=True)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='service_request_modified_by', null=True, blank = True, on_delete=models.CASCADE,)
     modified_date = models.DateTimeField(auto_now=True)
-    service_request_choices = [('Initiated' , 'Initiated') , ('Assigned' , 'Assigned') , ('Processing' , 'Processing') , ('Completed' , 'Completed') , ('Dumped' , 'Dumped') , ('Canceled' , 'Canceled')]
+    service_request_choices = [('Initiated' , 'Initiated') , ('Assigned' , 'Assigned') , ('Processing' , 'Processing') , ('Completed' , 'Completed') , ('Discharged' , 'Discharged') , ('Canceled' , 'Canceled')]
     status = models.CharField(max_length=20, choices=service_request_choices, default='Initiated')
     initiator = models.CharField(max_length=20, default='FGW')
     qr_scan_location = models.CharField(max_length=500, null=True)

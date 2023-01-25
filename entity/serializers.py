@@ -272,33 +272,47 @@ class EntityQRCodeScanSerializer(serializers.Serializer):
 
 class ServiceRequestPostSerializer(serializers.ModelSerializer):
     grease_traps =  serializers.ListField()
+    sr_grease_trap_status = serializers.CharField(default='Pending')
 
     class Meta:
         model = ServiceRequest
         exclude = ['entity_gtcc', 'grease_trap_count']
 
     def create(self, validated_data):
-        grease_traps = validated_data.pop("grease_traps")
-        entity = validated_data.get("entity")
-        active_gtcc_detail = entity.active_gtcc_detail
-        establishment_name = entity.establishment_name
+        grease_traps              = validated_data.pop("grease_traps")
+        sr_grease_trap_status     = validated_data.pop("sr_grease_trap_status")
+        entity                    = validated_data.get("entity")
+        created_by                = validated_data.get("created_by")
+        active_gtcc_detail        = entity.active_gtcc_detail
+        establishment_name        = entity.establishment_name
         if active_gtcc_detail == None:
             raise serializers.ValidationError("There is no GTCC assigned for this entity")
         
         if active_gtcc_detail.status == 'Active':
             service_request = ServiceRequest.objects.create(**validated_data, entity_gtcc = active_gtcc_detail, grease_trap_count = len(grease_traps))
+            driver          = service_request.driver
             for grease_trap in grease_traps:
                 grease_trap_data = EntityGreaseTrap.objects.get(pk=grease_trap)
                 ServiceRequestDetail.objects.create(
                     service_request = service_request,
-                    grease_trap = grease_trap_data
+                    grease_trap = grease_trap_data,
+                    status = sr_grease_trap_status
                 )
             ServiceRequestLog.objects.create(
                 service_request = service_request,
                 type = "Initiated",
                 log = "Job initiated from "+establishment_name,
-                created_by = validated_data.get("created_by")
+                created_by = created_by
             )
+            if sr_grease_trap_status == 'Completed':
+                ServiceRequestLog.objects.create(
+                    service_request = service_request,
+                    vehicle = service_request.vehicle,
+                    driver = driver,
+                    type = "Job Completed",
+                    log = f"This job has been completed by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
+                    created_by = created_by
+                )
             return service_request
         else:
             raise serializers.ValidationError("There is no active GTCC exist for this entity")

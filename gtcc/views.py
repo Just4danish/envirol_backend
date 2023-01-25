@@ -130,7 +130,7 @@ class GTCCDetails(APIView):
         serializer = GTCCDetailSerializer(data).data
         drivers = Account.objects.filter(link_id=pk, link_class='GTCC', user_class='GTCC', user_type='Driver').exclude(user_status='DT')
         serializer['drivers'] = DriverListSerializer(drivers, many=True).data
-        dumping_details = ServiceRequest.objects.filter(entity_gtcc__gtcc=data, status='Dumped')
+        dumping_details = ServiceRequest.objects.filter(entity_gtcc__gtcc=data, status='Discharged')
         serializer['dumping_details'] = ServiceRequestListSerializer(dumping_details, many=True).data
         return Response(serializer)
 
@@ -616,7 +616,7 @@ class ServiceRequestGreaseTrapsForMobileApp(APIView):
 #            return Response("Service request and Grease traps are required", status=status.HTTP_406_NOT_ACCEPTABLE) 
 
 def allJobs_list_for_driver(vehicleId):
-    data = ServiceRequest.objects.filter(vehicle_id = vehicleId).exclude(status='Dumped').exclude(status='Canceled')
+    data = ServiceRequest.objects.filter(vehicle_id = vehicleId).exclude(status='Discharged').exclude(status='Canceled')
     serialized_data = ServiceRequestSerializer(data,many=True).data
     return serialized_data
 
@@ -640,11 +640,25 @@ class UpdateServiceRequest(APIView):
             service_request = ServiceRequest.objects.get(pk = service_request_id)
             if service_request.status != "Processing":
                 return Response("You cannot modify this service request", status=status.HTTP_304_NOT_MODIFIED)
+
             service_request.status = "Completed"
             service_request.publish_location = request.data.get('publish_location', None)
             service_request.collection_completion_time = timezone.now()
             service_request.modified_by = request.user
             service_request.save()
+
+            driver = service_request.driver
+            entity = service_request.entity
+
+            ServiceRequestLog.objects.create(
+                service_request = service_request,
+                vehicle = service_request.vehicle,
+                driver = driver,
+                type = "Job Completed",
+                log = f"This job has been completed by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
+                created_by = driver
+            )
+
             data = allJobs_list_for_driver(service_request.vehicle.id)
             return Response(data, status=status.HTTP_200_OK)
 
@@ -1127,35 +1141,51 @@ class OperatorDumpingAcceptanceView(APIView):
         except:
             return Response({'error' : 'Vehicle not found'}, status=status.HTTP_400_BAD_REQUEST)
         if (data['operator_acceptance'] == 'Accepted'):
-            unit_price_model, _ = Unitprice.objects.get_or_create()
-            unit_price = unit_price_model.unit_price
-            vat = 0.05
-            total_fee_for_dumping = float(vehicle_entry_details.total_gallon_collected) * float(unit_price) * float(1+vat)
-            gtcc = vehicle_entry_details.gtcc
+            unit_price_model, _     = Unitprice.objects.get_or_create()
+            unit_price              = unit_price_model.unit_price
+            vat                     = 0.05
+            total_fee_for_dumping   = float(vehicle_entry_details.total_gallon_collected) * float(unit_price) * float(1+vat)
+            gtcc                    = vehicle_entry_details.gtcc
+
             if (total_fee_for_dumping > float(gtcc.credit_available)):
                 return Response({'error' : 'Insufficient balance !'}, status=status.HTTP_400_BAD_REQUEST)
-            vehicle_entry_details.total_gallon_dumped = vehicle_entry_details.total_gallon_collected
-            vehicle_entry_details.total_dumping_fee = total_fee_for_dumping
-            new_balance = float(gtcc.credit_available) - float(total_fee_for_dumping)
-            gtcc.credit_available = new_balance
+
+            vehicle_entry_details.total_gallon_dumped   = vehicle_entry_details.total_gallon_collected
+            vehicle_entry_details.total_dumping_fee     = total_fee_for_dumping
+            new_balance                                 = float(gtcc.credit_available) - float(total_fee_for_dumping)
+            gtcc.credit_available                       = new_balance
             gtcc.save()
-        vehicle_entry_details.operator_acceptance = data['operator_acceptance']
-        vehicle_entry_details.exit_time = timezone.now()
-        vehicle_entry_details.remarks = data['remarks']
-        vehicle_entry_details.current_status = "Exited"
+
+            # Now we need to update all the SRs as dumber
+            srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
+            for sr in srs:
+                driver = sr.driver
+
+                sr.status           = 'Discharged'
+                sr.discharge_time   = timezone.now()
+                sr.save()
+
+                ServiceRequestLog.objects.create(
+                    service_request     = sr,
+                    vehicle             = sr.vehicle,
+                    driver              = driver,
+                    type                = "Job Discharged",
+                    log                 = f"This job has been discharged by Mr.{request.user.full_name}",
+                    created_by          = request.user
+                )
+            
+            jobs = allJobs_list_of_driver_for_operator(vehicle_entry_details.id)
+            vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
+            data = {
+                        'vehicle_details'   : vehicle_details,
+                        'jobs'              : jobs
+                    }
+        vehicle_entry_details.operator              = request.user   
+        vehicle_entry_details.operator_acceptance   = data['operator_acceptance']
+        vehicle_entry_details.exit_time             = timezone.now()
+        vehicle_entry_details.remarks               = data['remarks']
+        vehicle_entry_details.current_status        = "Exited"
         vehicle_entry_details.save()
-        # Now we need to update all the SRs as dumber
-        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id)
-        for sr in srs:
-            sr.status = 'Dumped'
-            sr.save()
-        
-        jobs = allJobs_list_of_driver_for_operator(vehicle_entry_details.id)
-        vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
-        data = {
-            'vehicle_details' : vehicle_details,
-            'jobs' : jobs
-            }
         return Response(data, status=status.HTTP_200_OK)
 
 #Dashboard API
@@ -1218,7 +1248,7 @@ class DumpingDetails(APIView):
                     FROM "entity_servicerequest"
                     INNER JOIN "entity_entitygtcc"
                         ON ("entity_servicerequest"."entity_gtcc_id" = "entity_entitygtcc"."id")
-                    WHERE (("entity_servicerequest"."created_date")>= '{start_date}' AND ("entity_servicerequest"."created_date") <= '{end_date}' AND "entity_entitygtcc"."gtcc_id" = {gtcc} AND "entity_servicerequest"."status"='Dumped')
+                    WHERE (("entity_servicerequest"."created_date")>= '{start_date}' AND ("entity_servicerequest"."created_date") <= '{end_date}' AND "entity_entitygtcc"."gtcc_id" = {gtcc} AND "entity_servicerequest"."status"='Discharged')
                     GROUP BY DATE_TRUNC('month', ("entity_servicerequest"."created_date")),
                         DATE_TRUNC('year', ("entity_servicerequest"."created_date"))'''
         cursor = connection.cursor()
@@ -1236,7 +1266,7 @@ class DumpingDetails(APIView):
             "x_axis": x_axis,
             "y_axis" : [
                 {
-                    "name" : "Total Dumped",
+                    "name" : "Total Discharged",
                     "data" : y_axis
                 }
             ]
@@ -1341,7 +1371,7 @@ class DischargeTxnReport(generics.ListAPIView):
                                 'Entry Time', 
                                 'Exit Time', 
                                 'Total Gallons Collected',
-                                'Total Gallons Dumped',
+                                'Total Gallons Discharged',
                                 'Total Dumping Fee',
                                 'Operator Acceptance',
                                 'Remarks',
@@ -1370,7 +1400,7 @@ class DischargeTxnReport(generics.ListAPIView):
                 'Entry Time' : 'Entry Time',
                 'Exit Time' : 'Exit Time',
                 'Total Gallons Collected' : 'Total Gallons Collected',
-                'Total Gallons Dumped' : 'Total Gallons Dumped',
+                'Total Gallons Discharged' : 'Total Gallons Discharged',
                 'Total Dumping Fee' : 'Total Dumping Fee',
                 'Operator Acceptance' : 'Operator Acceptance',
                 'Remarks' : 'Remarks',
