@@ -1388,8 +1388,8 @@ class JobsAndCouponListBasedOnVehicleEntryDetails(APIView):
         jobs    = ServiceRequest.objects.filter(dumping_vehicledetails__id=vehicle_entry_id)
         coupons = Coupon.objects.filter(dumping_vehicledetails__id=vehicle_entry_id)
         data = {
-            "jobs"      : ServiceRequestSerializer(jobs, many=True).data,
-            "coupons"   : CouponListSerializer(coupons, many=True).data
+            "jobs"      : ServiceRequestListSerializer(jobs, many=True).data,
+            "coupons"   : CouponListDetailedSerializer(coupons, many=True).data
         }
         return Response(data, status=status.HTTP_200_OK)
 
