@@ -288,8 +288,8 @@ class VehicleQRCodeScan(APIView):
                             service_request = service_request,
                             vehicle = vehicle,
                             driver = service_request_driver,
-                            type = "Driver unassigned",
-                            log = f"Driver ({service_request_driver.full_name}) is unassigned",
+                            type = "Driver Unassigned",
+                            log = f"Driver Mr.({service_request_driver.full_name}) is unassigned",
                             created_by = driver
                         )
                     service_request.driver = driver
@@ -298,8 +298,8 @@ class VehicleQRCodeScan(APIView):
                         service_request = service_request,
                         vehicle = vehicle,
                         driver = driver,
-                        type = "Driver assigned",
-                        log = f"Driver ({driver.full_name}) is assigned by scanning the QR code",
+                        type = "Driver Assigned",
+                        log = f"Driver Mr.({driver.full_name}) is assigned by scanning the QR code",
                         created_by = driver
                     )
         serialized_data = VehicleListSerializer(vehicle).data
@@ -335,8 +335,8 @@ def unlink_vehicle_from_driver(driver):
                     service_request = service_request,
                     vehicle = vehicle,
                     driver = driver,
-                    type = "Driver unassigned",
-                    log = f"Driver ({driver.full_name}) is unassigned",
+                    type = "Driver Unassigned",
+                    log = f"Driver Mr.({driver.full_name}) is unassigned",
                     created_by = driver
                 )
                 service_request.driver = None
@@ -1567,10 +1567,14 @@ class EditCouponGallons(APIView):
             dumping_vehicledetails   = coupon.dumping_vehicledetails
             gtcc                     = dumping_vehicledetails.gtcc
             coupon_total_dumping_fee = dumping_vehicledetails.total_dumping_fee
-            unit_price_model, _     = Unitprice.objects.get_or_create()
-            unit_price              = unit_price_model.unit_price
-            vat                     = 0.05
-            total_fee_for_dumping   = decimal.Decimal(total_gallons) * decimal.Decimal(unit_price) * decimal.Decimal(1+vat)
+            unit_price_model, _      = Unitprice.objects.get_or_create()
+            unit_price               = unit_price_model.unit_price
+            vat                      = 0.05
+            total_fee_for_dumping    = decimal.Decimal(total_gallons) * decimal.Decimal(unit_price) * decimal.Decimal(1+vat)
+            
+            if (total_fee_for_dumping > float(gtcc.credit_available)):
+                return Response({'error' : 'Insufficient balance !'}, status=status.HTTP_400_BAD_REQUEST)
+
             dumping_vehicledetails.total_gallon_collected = total_gallons
             dumping_vehicledetails.total_dumping_fee = total_fee_for_dumping
             dumping_vehicledetails.save()

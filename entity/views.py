@@ -395,35 +395,32 @@ class EntityQRCodeScan(APIView):
     
     @transaction.atomic
     def post(self, request):
-        # serializer = EntityQRCodeScanSerializer(data=request.data)
-        # if serializer.is_valid():
         random_key          = request.data.get('random_key')
         service_request_id  = request.data.get('service_request_id', None)
         qr_scan_location    = request.data.get('qr_scan_location', None)
         vehicle             = request.user.assigned_vehicle
-        
-        # breakpoint()
+        driver              = request.user
         try:
-            entity = Entity.objects.get(random_key = random_key)
-            service_requests = ServiceRequest.objects.filter(entity=entity, vehicle=vehicle, status='Assigned')
+            entity              = Entity.objects.get(random_key = random_key)
+            service_requests    = ServiceRequest.objects.filter(entity=entity, vehicle=vehicle, status='Assigned')
             if (service_request_id != None):
                 service_requests = service_requests.filter(id = service_request_id)
-            # breakpoint()
             if len(service_requests) == 0:
                 return Response({'error': 'No service requests are Assigned !'}, status=status.HTTP_404_NOT_FOUND)
             elif len(service_requests) == 1:
-                service_request_data = service_requests[0]
-                service_request_data.status = 'Processing'
-                service_request_data.qr_scan_location = qr_scan_location
+                service_request_data                    = service_requests[0]
+                service_request_data.driver             = driver
+                service_request_data.status             = 'Processing'
+                service_request_data.qr_scan_location   = qr_scan_location
                 service_request_data.save()
-                driver = request.user
+                
                 ServiceRequestLog.objects.create(
-                    service_request = service_request_data,
-                    vehicle = service_request_data.vehicle,
-                    driver = driver,
-                    type = "Job started",
-                    log = f"This job has been started by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
-                    created_by = driver
+                    service_request     = service_request_data,
+                    vehicle             = service_request_data.vehicle,
+                    driver              = driver,
+                    type                = "Job Started",
+                    log                 = f"This job has been started by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
+                    created_by          = driver
                 )
                 response_data = {
                     'selected_job' : ServiceRequestSerializer(service_request_data).data,
@@ -612,6 +609,7 @@ class ConvertCouponToSR(APIView):
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
         if service_request_date >= coupon.returned_on:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
+            
         service_request    = serializer.save(created_by = request.user)
 
         coupon.converted_on     = timezone.now()

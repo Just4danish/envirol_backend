@@ -323,8 +323,8 @@ class VehicleQRCodeScanSerializer(serializers.ModelSerializer):
                         service_request = service_request,
                         vehicle = vehicle,
                         driver = service_request_driver,
-                        type = "Driver unassigned",
-                        log = f"Driver ({service_request_driver.full_name}) is unassigned",
+                        type = "Driver Unassigned",
+                        log = f"Driver Mr.({service_request_driver.full_name}) is unassigned",
                         created_by = driver
                     )
                 service_request.driver = driver
@@ -333,8 +333,8 @@ class VehicleQRCodeScanSerializer(serializers.ModelSerializer):
                     service_request = service_request,
                     vehicle = vehicle,
                     driver = driver,
-                    type = "Driver assigned",
-                    log = f"Driver ({driver.full_name}) is assigned by scanning the QR code",
+                    type = "Driver Assigned",
+                    log = f"Driver Mr.({driver.full_name}) is assigned by scanning the QR code",
                     created_by = driver
                 )
         return vehicle
@@ -385,8 +385,8 @@ class AssignVehicleForServiceRequestSerializer(serializers.Serializer):
             ServiceRequestLog.objects.create(
                 service_request = service_request_data,
                 vehicle = vehicle_data,
-                type = request_type+" to vehicle",
-                log = request_type+" to vehicle by "+user_data.full_name,
+                type = request_type,
+                log = f'{request_type} to vehicle ({vehicle_data.vehicle_no}) by {user_data.full_name}',
                 created_by = user_data
             )
             return service_request_data

@@ -234,41 +234,41 @@ class EntityGreaseTrapDetailedSerializer(serializers.ModelSerializer):
         model = EntityGreaseTrap
         exclude = common_exclude_list
 
-class EntityQRCodeScanSerializer(serializers.Serializer):
-    random_key = serializers.CharField()
-    service_request_id = serializers.IntegerField(required=False)
+# class EntityQRCodeScanSerializer(serializers.Serializer):
+#     random_key = serializers.CharField()
+#     service_request_id = serializers.IntegerField(required=False)
 
-    def create(self, validated_data):
-        random_key = validated_data.get('random_key')
-        service_request = validated_data.get('service_request_id', None)
-        driver = validated_data.get('driver')
-        entity_data = Entity.objects.filter(random_key=random_key).exclude(status='Deleted').first()
-        if not entity_data:
-            raise serializers.ValidationError('Entity not found')
-        if service_request == None:
-            data = ServiceRequest.objects.filter(entity=entity_data)
-            return ServiceRequestListSerializer(data, many=True).data
-        else:
-            try:
-                service_request_data = ServiceRequest.objects.get(pk=service_request, status='Assigned')
-            except ServiceRequest.DoesNotExist:
-                raise serializers.ValidationError("Service request not found")
-            if service_request_data.entity != entity_data:
-                raise serializers.ValidationError("This service request could not be associated with the scanned entity")
-            elif service_request_data.driver != driver:
-                raise serializers.ValidationError("This service request not associated with you")
-            else:
-                service_request_data.status = 'Processing'
-                service_request_data.save()
-                ServiceRequestLog.objects.create(
-                    service_request = service_request_data,
-                    vehicle = service_request_data.vehicle,
-                    driver = driver,
-                    type = "Job started",
-                    log = f"This job has been started by Mr.{driver.full_name} at the {entity_data.establishment_name} restaurant",
-                    created_by = driver
-                )
-                return ServiceRequestListSerializer(service_request_data).data
+#     def create(self, validated_data):
+#         random_key      = validated_data.get('random_key')
+#         service_request = validated_data.get('service_request_id', None)
+#         driver          = validated_data.get('driver')
+#         entity_data     = Entity.objects.filter(random_key=random_key).exclude(status='Deleted').first()
+#         if not entity_data:
+#             raise serializers.ValidationError('Entity not found')
+#         if service_request == None:
+#             data = ServiceRequest.objects.filter(entity=entity_data)
+#             return ServiceRequestListSerializer(data, many=True).data
+#         else:
+#             try:
+#                 service_request_data = ServiceRequest.objects.get(pk=service_request, status='Assigned')
+#             except ServiceRequest.DoesNotExist:
+#                 raise serializers.ValidationError("Service request not found")
+#             if service_request_data.entity != entity_data:
+#                 raise serializers.ValidationError("This service request could not be associated with the scanned entity")
+#             elif service_request_data.driver != driver:
+#                 raise serializers.ValidationError("This service request not associated with you")
+#             else:
+#                 service_request_data.status = 'Processing'
+#                 service_request_data.save()
+#                 ServiceRequestLog.objects.create(
+#                     service_request = service_request_data,
+#                     vehicle = service_request_data.vehicle,
+#                     driver = driver,
+#                     type = "Job Started",
+#                     log = f"This job has been started by Mr.{driver.full_name} at the {entity_data.establishment_name} restaurant",
+#                     created_by = driver
+#                 )
+#                 return ServiceRequestListSerializer(service_request_data).data
 
 class ServiceRequestPostSerializer(serializers.ModelSerializer):
     grease_traps =  serializers.ListField()
