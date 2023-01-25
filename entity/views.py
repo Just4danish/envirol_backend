@@ -397,14 +397,15 @@ class EntityQRCodeScan(APIView):
     def post(self, request):
         # serializer = EntityQRCodeScanSerializer(data=request.data)
         # if serializer.is_valid():
-        random_key = request.data.get('random_key')
-        service_request_id = request.data.get('service_request_id', None)
-        qr_scan_location = request.data.get('qr_scan_location', None)
+        random_key          = request.data.get('random_key')
+        service_request_id  = request.data.get('service_request_id', None)
+        qr_scan_location    = request.data.get('qr_scan_location', None)
+        vehicle             = request.user.assigned_vehicle
         
         # breakpoint()
         try:
             entity = Entity.objects.get(random_key = random_key)
-            service_requests = ServiceRequest.objects.filter(entity = entity, status = 'Assigned')
+            service_requests = ServiceRequest.objects.filter(entity=entity, vehicle=vehicle, status='Assigned')
             if (service_request_id != None):
                 service_requests = service_requests.filter(id = service_request_id)
             # breakpoint()

@@ -143,6 +143,11 @@ class EntityFixtureListSerializer(serializers.ModelSerializer):
         exclude = common_exclude_list
 
 class EntityGreaseTrapPostSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        if data['last_cleaning_date'] > timezone.now().date():
+            raise serializers.ValidationError("Future date not allowed for last cleaning date")
+        return data
+
     class Meta:
         model = EntityGreaseTrap
         exclude = ['grease_trap_label', 'next_cleaning_date', 'created_by']

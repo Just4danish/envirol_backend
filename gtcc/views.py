@@ -847,12 +847,11 @@ class AddDeleteCouponView(APIView):
             coupon.returned_on = timezone.now()
             coupon.returned_by_id = int(data['driver_id'])
             coupon.collected_by = request.user
-            coupon.status = 'Converted'
             coupon_image = data['coupon_image']
             coupon.image.save(coupon_image.name,coupon_image,save=False)
             coupon.vehicle = vehicle_entry_details.vehicle
             coupon.dumping_vehicledetails = vehicle_entry_details
-            coupon.status = 'Converted'
+            coupon.status = 'Used'
             coupon.save()
             vehicle_entry_details.total_gallon_collected += int(data['total_gallons'])
             vehicle_entry_details.save()
