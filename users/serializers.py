@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Account, LoginDetail
 from django.contrib.auth.models import User
 from masters.serializers import DesignationListSerializer
+from rest_framework.validators import UniqueValidator
 
 class LoginSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=20, min_length=8, write_only=True)
@@ -26,6 +27,9 @@ class CreateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = "__all__"
+
+class AccountEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(validators=[UniqueValidator(queryset=Account.objects.all())])
                
 class AccountSerializer(serializers.ModelSerializer):
     designation = DesignationListSerializer()

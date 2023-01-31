@@ -2,6 +2,7 @@ from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, filters
 from .serializers import *
+from users.serializers import AccountEmailSerializer
 from .models import ServiceRequestLog
 from django.http import Http404, HttpResponse
 from django.db import transaction
@@ -130,6 +131,49 @@ class EntityDetails(APIView):
             data = serializer.save(modified_by = request.user)
             return Response(EntityListSerializer(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ImportEntity(APIView):
+
+    @transaction.atomic
+    def post(self, request):
+        datas           = request.data
+        response_data   = []
+        try:
+            for data in datas['received_file']:
+                invitee_email       = data['Email Id']
+                email_serializer    = AccountEmailSerializer(data = {"email" :invitee_email})
+                if email_serializer.is_valid():
+                    first_name_temp, last_name_temp = name_maker(data['Contact Person'])
+                    designation                     = Designation.objects.get(designation=data['Designation'])
+                    entity = Entity.objects.create(
+                        establishment_name  = data['Establishment Name'],
+                        trade_license_no    = data['Trade License No'],
+                        office_email        = data['Office Email'],
+                        po_box              = data['PO Box'],
+                        phone_no            = data['Company Contact No'],
+                    )
+                    active_contact_person = Account.objects.create(
+                        email               =   invitee_email,
+                        username            =   invitee_email,
+                        first_name          =   first_name_temp,
+                        last_name           =   last_name_temp,
+                        contact_number      =   data['Contact Number'],
+                        emirate             =   data['Emirate'],
+                        designation         =   designation,
+                        inviter             =   request.user,
+                        link_id             =   entity.id,
+                        link_class          =   'Entity',
+                        user_class          =   'Entity',
+                        user_type           =   'User',
+                        inviting_key        =   get_random_string(64).lower(),
+                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                    )
+                    entity.active_contact_person = active_contact_person
+                    entity.save()
+                    response_data.append(entity)
+            return Response(EntityListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 
 class EntityServiceRequestListView(generics.ListAPIView):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

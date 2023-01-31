@@ -7,7 +7,7 @@ from masters.models import Unitprice
 from .serializers import *
 from django.http import Http404,HttpResponse
 from django.db import transaction
-from users.serializers import UserLimitedDetailSerializer
+from users.serializers import UserLimitedDetailSerializer, AccountEmailSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from abacimodules.permissions import IsDriver, IsOperator, IsGTCCUser
 import decimal
@@ -142,6 +142,49 @@ class GTCCDetails(APIView):
             data = serializer.save(modified_by = request.user)
             return Response(GTCCListSerializer(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ImportGTCC(APIView):
+
+    @transaction.atomic
+    def post(self, request):
+        datas           = request.data
+        response_data   = []
+        try:
+            for data in datas['received_file']:
+                invitee_email       = data['Email Id']
+                email_serializer    = AccountEmailSerializer(data = {"email" :invitee_email})
+                if email_serializer.is_valid():
+                    first_name_temp, last_name_temp = name_maker(data['Contact Person'])
+                    designation                     = Designation.objects.get(designation=data['Designation'])
+                    gtcc = GTCC.objects.create(
+                        establishment_name  = data['Establishment Name'],
+                        trade_license_no    = data['Trade License No'],
+                        office_email        = data['Office Email'],
+                        po_box              = data['PO Box'],
+                        phone_no            = data['Company Contact No'],
+                    )
+                    active_contact_person = Account.objects.create(
+                        email               =   invitee_email,
+                        username            =   invitee_email,
+                        first_name          =   first_name_temp,
+                        last_name           =   last_name_temp,
+                        contact_number      =   data['Contact Number'],
+                        emirate             =   data['Emirate'],
+                        designation         =   designation,
+                        inviter             =   request.user,
+                        link_id             =   gtcc.id,
+                        link_class          =   'GTCC',
+                        user_class          =   'GTCC',
+                        user_type           =   'User',
+                        inviting_key        =   get_random_string(64).lower(),
+                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                    )
+                    gtcc.active_contact_person = active_contact_person
+                    gtcc.save()
+                    response_data.append(gtcc)
+            return Response(GTCCListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 
 class GTCCDropdownList(APIView):
     def get(self, request):

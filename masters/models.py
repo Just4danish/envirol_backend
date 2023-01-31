@@ -20,6 +20,8 @@ class MainCategory(models.Model):
 class SubCategory(models.Model):
     main_category = models.ForeignKey(MainCategory, related_name="sub_main_category", on_delete=models.CASCADE)
     sub_category = models.CharField(max_length=100)
+    foodwatch_id = models.IntegerField(null=True)
+    foodwatch_name = models.CharField(max_length=100, null=True)
     created_by = models.ForeignKey(Account, related_name='sub_category_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='sub_category_modified_by', on_delete=models.CASCADE, null=True)
@@ -91,6 +93,8 @@ class SubArea(models.Model):
     zone = models.ForeignKey(Zone, related_name="sub_area_zone", on_delete=models.CASCADE)
     area = models.ForeignKey(Area, related_name="sub_area_area", on_delete=models.CASCADE)
     sub_area = models.CharField(max_length=100, unique=True)
+    foodwatch_id = models.IntegerField(null=True)
+    foodwatch_name = models.CharField(max_length=100, null=True)
     created_by = models.ForeignKey(Account, related_name='sub_area_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='sub_area_modified_by', on_delete=models.CASCADE, null=True)
