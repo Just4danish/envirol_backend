@@ -132,6 +132,47 @@ class EntityDetails(APIView):
             return Response(EntityListSerializer(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ValidateImportEntity(APIView):
+    def post(self, request):
+        datas           = request.data
+        response_data   = []
+        exist_count     = 0
+        try:
+            for data in datas:
+                invitee_email                   = data['Contact Person Email Id']
+                designation                     = data['Designation']
+                sub_area                        = data['Sub Area']
+                sub_category                    = data['Sub Category']
+                data['email_status']            = ""
+                data['designation_status']      = ""
+                data['sub_area_status']         = ""
+                data['sub_category_status']     = ""
+                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
+                if email_serializer.is_valid():
+                    data['email_status'] = email_serializer.errors
+                    exist_count = exist_count + 1
+                designation = Designation.objects.filter(designation=designation).first()
+                if designation is not None:
+                    data['designation_status'] = "Designation not found"
+                    exist_count = exist_count + 1
+                sub_area    = SubArea.objects.filter(sub_area=sub_area).first()
+                if sub_area is not None:
+                    data['sub_area_status'] = "Sub area not found"
+                    exist_count = exist_count + 1
+                sub_category = SubCategory.objects.filter(sub_category=sub_category).first()
+                if sub_category is not None:
+                    data['sub_category_status'] = "Sub category not found"
+                    exist_count = exist_count + 1
+                response_data.append(data)
+            data = {
+                "entity_count"  : len(datas),
+                "exist_count"   : exist_count,
+                "entity_list"   : response_data
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
+
 class ImportEntity(APIView):
 
     @transaction.atomic
@@ -140,37 +181,56 @@ class ImportEntity(APIView):
         response_data   = []
         try:
             for data in datas['received_file']:
-                invitee_email       = data['Email Id']
+                invitee_email       = data['Contact Person Email Id']
                 email_serializer    = AccountEmailSerializer(data = {"email" :invitee_email})
                 if email_serializer.is_valid():
                     first_name_temp, last_name_temp = name_maker(data['Contact Person'])
-                    designation                     = Designation.objects.get(designation=data['Designation'])
-                    entity = Entity.objects.create(
-                        establishment_name  = data['Establishment Name'],
-                        trade_license_no    = data['Trade License No'],
-                        office_email        = data['Office Email'],
-                        po_box              = data['PO Box'],
-                        phone_no            = data['Company Contact No'],
-                    )
-                    active_contact_person = Account.objects.create(
-                        email               =   invitee_email,
-                        username            =   invitee_email,
-                        first_name          =   first_name_temp,
-                        last_name           =   last_name_temp,
-                        contact_number      =   data['Contact Number'],
-                        emirate             =   data['Emirate'],
-                        designation         =   designation,
-                        inviter             =   request.user,
-                        link_id             =   entity.id,
-                        link_class          =   'Entity',
-                        user_class          =   'Entity',
-                        user_type           =   'User',
-                        inviting_key        =   get_random_string(64).lower(),
-                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
-                    )
-                    entity.active_contact_person = active_contact_person
-                    entity.save()
-                    response_data.append(entity)
+                    contact_person_designation  = data['Designation']
+                    sub_area_name               = data['Sub Area']
+                    sub_category_name           = data['Sub Category']
+                    designation                 = Designation.objects.filter(designation=contact_person_designation).first()
+                    sub_area                    = SubArea.objects.filter(sub_area=sub_area_name).first()
+                    sub_category                = SubCategory.objects.filter(sub_category=sub_category_name).first()
+                    if sub_category != None and sub_area != None:
+                        entity = Entity.objects.create(
+                            establishment_name      = data['Establishment Name'],
+                            trade_license_name      = data['Entity License Name'],
+                            trade_license_no        = data['Trade License No'],
+                            foodwatch_business_id   = data['FoodWatch Business Id'],
+                            foodwatch_id            = data['FoodWatch Id'],
+                            env_sap_id              = data['Entity Sap Id'],
+                            makhani_no              = data['Makani No'],
+                            location                = data['Entity Location'],
+                            google_location         = data['Google Location'],
+                            gps_coordinates         = data['Co-ordinates'],
+                            office_email            = data['Establishment Email'],
+                            po_box                  = data['PO Box'],
+                            phone_no                = data['Establishment Phone No'],
+                            zone                    = sub_area.zone,
+                            area                    = sub_area.area,
+                            subarea                 = sub_area,
+                            category                = sub_category.main_category,
+                            sub_category            = sub_category,
+                        )
+                        active_contact_person = Account.objects.create(
+                            email               =   invitee_email,
+                            username            =   invitee_email,
+                            first_name          =   first_name_temp,
+                            last_name           =   last_name_temp,
+                            contact_number      =   data['Contact Number'],
+                            emirate             =   data['Emirate Id'],
+                            designation         =   designation,
+                            inviter             =   request.user,
+                            link_id             =   entity.id,
+                            link_class          =   'Entity',
+                            user_class          =   'Entity',
+                            user_type           =   'User',
+                            inviting_key        =   get_random_string(64).lower(),
+                            invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                        )
+                        entity.active_contact_person = active_contact_person
+                        entity.save()
+                        response_data.append(entity)
             return Response(EntityListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)

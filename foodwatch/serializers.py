@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from entity.models import Entity, EntityGreaseTrap
 from masters.models import GreaseTrap
+from .models import FoodwatchEntity
+from masters.serializers import SubAreaListSerializer, SubCategoryListSerializer
 
 class ServiceRequestPostSerializer(serializers.Serializer):
     entity_foodwatch_id = serializers.IntegerField()
@@ -23,3 +25,9 @@ class EntityGreaseTrapListSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntityGreaseTrap
         fields = ['capacity', 'grease_trap_label', 'grease_trap']
+
+class FoodwatchEntitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodwatchEntity
+        fields = '__all__'
+        read_only_fields = ('foodwatch_id',)

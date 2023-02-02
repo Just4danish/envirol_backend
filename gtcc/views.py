@@ -11,6 +11,7 @@ from users.serializers import UserLimitedDetailSerializer, AccountEmailSerialize
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from abacimodules.permissions import IsDriver, IsOperator, IsGTCCUser
 import decimal
+import json
 from django.db import connection
 import pandas as pd
 from django.db.models import Sum, Count
@@ -143,6 +144,64 @@ class GTCCDetails(APIView):
             return Response(GTCCListSerializer(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ExcelOrCSVUploadView(APIView):
+    def post(self, request):
+        imported_file = request.data.get('imported_file', None)
+        if imported_file is not None:
+            df = pd.io.excel.read_excel(imported_file)
+            received_fields = df.columns
+            content = {
+                "received_flelds" : received_fields,
+                "received_file"   : json.loads(df.to_json(orient='records'))
+            }
+            return Response(content, status=status.HTTP_200_OK)
+        else:
+            return Response("File is required", status=status.HTTP_200_OK)
+
+class ValidateImportGTCC(APIView):
+    def post(self, request):
+        datas           = request.data
+        response_data   = []
+        exist_count     = 0
+        try:
+            for data in datas:
+                invitee_email                       = data['Contact Person Email Id']
+                designation                         = data['Designation']
+                establishment_name                  = data['Establishment Name']
+                trade_license_no                    = data['Trade License No']
+                emirate_id                          = data['Emirate Id']
+                data['establishment_name_status']   = ""
+                data['trade_license_no_status']     = ""
+                data['email_status']                = ""
+                data['designation_status']          = ""
+                data['emirate_id_status']           = ""
+                if establishment_name is None:
+                    data['establishment_name_status'] = "Establishment name is required"
+                    exist_count = exist_count + 1
+                if trade_license_no is None:
+                    data['trade_license_no_status'] = "Trade license no is required"
+                    exist_count = exist_count + 1
+                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
+                if not email_serializer.is_valid():
+                    data['email_status'] = "Email already exist"
+                    exist_count = exist_count + 1
+                designation = Designation.objects.filter(designation=designation).first()
+                if designation is None:
+                    data['designation_status'] = "Designation not found"
+                    exist_count = exist_count + 1
+                if len(emirate_id) > 15:
+                    data['emirate_id_status'] = "Invalid emirate id"
+                    exist_count = exist_count + 1
+                response_data.append(data)
+            data = {
+                "gtcc_count"  : len(datas),
+                "exist_count" : exist_count,
+                "gtcc_list"   : response_data
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
+
 class ImportGTCC(APIView):
 
     @transaction.atomic
@@ -151,37 +210,46 @@ class ImportGTCC(APIView):
         response_data   = []
         try:
             for data in datas['received_file']:
-                invitee_email       = data['Email Id']
+                invitee_email       = data['Contact Person Email Id']
+                establishment_name  = data['Establishment Name']
+                trade_license_no    = data['Trade License No']
                 email_serializer    = AccountEmailSerializer(data = {"email" :invitee_email})
                 if email_serializer.is_valid():
                     first_name_temp, last_name_temp = name_maker(data['Contact Person'])
-                    designation                     = Designation.objects.get(designation=data['Designation'])
-                    gtcc = GTCC.objects.create(
-                        establishment_name  = data['Establishment Name'],
-                        trade_license_no    = data['Trade License No'],
-                        office_email        = data['Office Email'],
-                        po_box              = data['PO Box'],
-                        phone_no            = data['Company Contact No'],
-                    )
-                    active_contact_person = Account.objects.create(
-                        email               =   invitee_email,
-                        username            =   invitee_email,
-                        first_name          =   first_name_temp,
-                        last_name           =   last_name_temp,
-                        contact_number      =   data['Contact Number'],
-                        emirate             =   data['Emirate'],
-                        designation         =   designation,
-                        inviter             =   request.user,
-                        link_id             =   gtcc.id,
-                        link_class          =   'GTCC',
-                        user_class          =   'GTCC',
-                        user_type           =   'User',
-                        inviting_key        =   get_random_string(64).lower(),
-                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
-                    )
-                    gtcc.active_contact_person = active_contact_person
-                    gtcc.save()
-                    response_data.append(gtcc)
+                    designation                     = Designation.objects.filter(designation=data['Designation']).first()
+                    if establishment_name is not None and trade_license_no is not None:
+                        gtcc = GTCC.objects.create(
+                                establishment_name      = establishment_name,
+                                trade_license_no        = trade_license_no,
+                                trade_license_name      = data['Establishment Name'],
+                                foodwatch_business_id   = data['FoodWatch Business Id'],
+                                foodwatch_id            = data['FoodWatch Id'],
+                                env_sap_id              = data['GTCC Sap Id'],
+                                location                = data['Location'],
+                                office_email            = data['Office Email Id'],
+                                po_box                  = data['PO Box'],
+                                phone_no                = data['Company Contact No'],
+                                created_by              = request.user
+                            )
+                        active_contact_person = Account.objects.create(
+                            email               =   invitee_email,
+                            username            =   invitee_email,
+                            first_name          =   first_name_temp,
+                            last_name           =   last_name_temp,
+                            contact_number      =   data['Contact Number'],
+                            emirate             =   data['Emirate Id'],
+                            designation         =   designation,
+                            inviter             =   request.user,
+                            link_id             =   gtcc.id,
+                            link_class          =   'GTCC',
+                            user_class          =   'GTCC',
+                            user_type           =   'User',
+                            inviting_key        =   get_random_string(64).lower(),
+                            invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                        )
+                        gtcc.active_contact_person = active_contact_person
+                        gtcc.save()
+                        response_data.append(gtcc)
             return Response(GTCCListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)

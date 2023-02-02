@@ -64,8 +64,8 @@ class Account(AbstractBaseUser):
     emp_id = models.CharField(max_length=50, null=True)
     link_id = models.IntegerField(null=True)
     link_class = models.CharField(max_length=50, null=True)
-    designation = models.ForeignKey("masters.Designation", related_name='user_designation', on_delete=models.CASCADE, null=True, blank=True)
-    assigned_vehicle = models.ForeignKey("gtcc.VehicleDetail", related_name='assigned_vehicle', on_delete=models.CASCADE, null=True, blank=True)
+    designation = models.ForeignKey("masters.Designation", related_name='user_designation', on_delete=models.SET_NULL, null=True, blank=True)
+    assigned_vehicle = models.ForeignKey("gtcc.VehicleDetail", related_name='assigned_vehicle', on_delete=models.SET_NULL, null=True, blank=True)
     license_no = models.CharField(max_length=50, null=True)
     extension_number = models.CharField(max_length=100, null=True)
     contact_number = models.CharField(max_length=100, null=True, blank=True)
@@ -77,7 +77,7 @@ class Account(AbstractBaseUser):
     inviting_key = models.CharField(max_length=100, blank=True, null=True)
     registration_key = models.CharField(max_length=100, blank=True, null=True)
     api_key = models.CharField(max_length=100, blank=True, null=True)
-    inviter = models.ForeignKey('self', related_name='inviter_user', on_delete=models.CASCADE, null=True)
+    inviter = models.ForeignKey('self', related_name='inviter_user', on_delete=models.SET_NULL, null=True)
     invited_date = models.DateTimeField(verbose_name='created', auto_now_add=True)
     invite_expiry_date = models.DateTimeField(verbose_name='created', null=True)
     is_staff = models.BooleanField(default=False)
@@ -87,7 +87,7 @@ class Account(AbstractBaseUser):
     user_class   = models.CharField(max_length=10, choices=user_classes)
     user_types  = [('Admin', 'Admin'), ('User', 'User'), ('Driver', 'Driver'), ('Inspector', 'Inspector'), ('Operator', 'Operator')]
     user_type   = models.CharField(max_length=10, choices=user_types)
-    modified_by = models.ForeignKey('self', related_name='account_modified_by', on_delete=models.CASCADE, null=True, blank=True)
+    modified_by = models.ForeignKey('self', related_name='account_modified_by', on_delete=models.SET_NULL, null=True, blank=True)
     modified_date = models.DateTimeField(auto_now=True)
 
     objects = MyUserManager()

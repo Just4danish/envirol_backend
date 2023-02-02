@@ -50,6 +50,9 @@ urlpatterns = [
     path('edit_coupon_gallons/<int:pk>',EditCouponGallons.as_view()),
     path('edit_coupon_log_list', EditCouponLogList.as_view()),
     path('jobs_and_coupon_based_on_vehicle_entry_details/<int:vehicle_entry_id>',JobsAndCouponListBasedOnVehicleEntryDetails.as_view()),
+    path('import_excel', ExcelOrCSVUploadView.as_view()),
+    path('validate_import_gtcc', ValidateImportGTCC.as_view()),
+    path('import_gtcc', ImportGTCC.as_view()),
 ]
 
 #Dashboard API URLS
