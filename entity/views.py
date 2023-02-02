@@ -16,6 +16,7 @@ from io import BytesIO
 from django.core.files import File as Files
 from rest_framework.permissions import IsAuthenticated
 from abacimodules.permissions import IsEntityUser
+import pytz
 
 class EntityList(generics.ListCreateAPIView):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -817,9 +818,10 @@ class ConvertCouponToSR(APIView):
         if total_gallons != coupon.total_gallons:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
         service_request_date = datetime.datetime.strptime(service_request_date, '%m-%d-%Y %H:%M')
-        print(type(service_request_date))
-        print(type(coupon.returned_on))
-        if service_request_date >= coupon.returned_on:
+        utc                  = pytz.UTC
+        service_request_date = utc.localize(service_request_date)
+        coupon_returned_on   = utc.localize(coupon.returned_on)
+        if service_request_date >= coupon_returned_on:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
             
         service_request    = serializer.save(
