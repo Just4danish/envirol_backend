@@ -168,6 +168,8 @@ class ValidateImportGTCC(APIView):
                 invitee_email                       = data['Contact Person Email Id']
                 designation                         = data['Designation']
                 establishment_name                  = data['Establishment Name']
+                foodwatch_business_id               = data['FoodWatch Business Id'],
+                foodwatch_id                        = data['FoodWatch Id'],
                 trade_license_no                    = data['Trade License No']
                 emirate_id                          = data['Emirate Id']
                 data['establishment_name_status']   = ""
@@ -175,23 +177,39 @@ class ValidateImportGTCC(APIView):
                 data['email_status']                = ""
                 data['designation_status']          = ""
                 data['emirate_id_status']           = ""
+                data['foodwatch_business_id_status']= ""
+                data['foodwatch_id_status']         = ""
+                data['is_verified']                 = True
                 if establishment_name is None:
                     data['establishment_name_status'] = "Establishment name is required"
                     exist_count = exist_count + 1
+                    data['is_verified']                 = False
                 if trade_license_no is None:
                     data['trade_license_no_status'] = "Trade license no is required"
                     exist_count = exist_count + 1
+                    data['is_verified']                 = False
                 email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
                 if not email_serializer.is_valid():
-                    data['email_status'] = "Email already exist"
+                    data['email_status'] = "Email already exist/ Invalid email"
                     exist_count = exist_count + 1
+                    data['is_verified']                 = False
                 designation = Designation.objects.filter(designation=designation).first()
                 if designation is None:
                     data['designation_status'] = "Designation not found"
                     exist_count = exist_count + 1
+                    data['is_verified']                 = False
+                if not type(foodwatch_business_id[0]) == int:
+                    data['foodwatch_business_id_status'] = "Integer value only"
+                    exist_count = exist_count + 1
+                    data['is_verified']               = False
+                if not type(foodwatch_id[0]) == int:
+                    data['foodwatch_id_status'] = "Integer value only"
+                    exist_count = exist_count + 1
+                    data['is_verified']               = False
                 if len(emirate_id) > 15:
                     data['emirate_id_status'] = "Invalid emirate id"
                     exist_count = exist_count + 1
+                    data['is_verified']                 = False
                 response_data.append(data)
             data = {
                 "gtcc_count"  : len(datas),
@@ -210,46 +228,48 @@ class ImportGTCC(APIView):
         response_data   = []
         try:
             for data in datas['received_file']:
-                invitee_email       = data['Contact Person Email Id']
-                establishment_name  = data['Establishment Name']
-                trade_license_no    = data['Trade License No']
-                email_serializer    = AccountEmailSerializer(data = {"email" :invitee_email})
-                if email_serializer.is_valid():
+                is_verified         = data['is_verified']
+                if is_verified:
+                    invitee_email               = data['Contact Person Email Id']
+                    establishment_name          = data['Establishment Name']
+                    trade_license_no            = data['Trade License No']
+                    foodwatch_business_id       = data['FoodWatch Business Id'],
+                    foodwatch_id                = data['FoodWatch Id'],
                     first_name_temp, last_name_temp = name_maker(data['Contact Person'])
                     designation                     = Designation.objects.filter(designation=data['Designation']).first()
-                    if establishment_name is not None and trade_license_no is not None:
-                        gtcc = GTCC.objects.create(
-                                establishment_name      = establishment_name,
-                                trade_license_no        = trade_license_no,
-                                trade_license_name      = data['Establishment Name'],
-                                foodwatch_business_id   = data['FoodWatch Business Id'],
-                                foodwatch_id            = data['FoodWatch Id'],
-                                env_sap_id              = data['GTCC Sap Id'],
-                                location                = data['Location'],
-                                office_email            = data['Office Email Id'],
-                                po_box                  = data['PO Box'],
-                                phone_no                = data['Company Contact No'],
-                                created_by              = request.user
-                            )
-                        active_contact_person = Account.objects.create(
-                            email               =   invitee_email,
-                            username            =   invitee_email,
-                            first_name          =   first_name_temp,
-                            last_name           =   last_name_temp,
-                            contact_number      =   data['Contact Number'],
-                            emirate             =   data['Emirate Id'],
-                            designation         =   designation,
-                            inviter             =   request.user,
-                            link_id             =   gtcc.id,
-                            link_class          =   'GTCC',
-                            user_class          =   'GTCC',
-                            user_type           =   'User',
-                            inviting_key        =   get_random_string(64).lower(),
-                            invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                    gtcc = GTCC.objects.create(
+                            establishment_name      = establishment_name,
+                            trade_license_no        = trade_license_no,
+                            trade_license_name      = data['Establishment Name'],
+                            foodwatch_business_id   = foodwatch_business_id[0],
+                            foodwatch_id            = foodwatch_id[0],
+                            env_sap_id              = data['GTCC Sap Id'],
+                            location                = data['Location'],
+                            office_email            = data['Office Email Id'],
+                            po_box                  = data['PO Box'],
+                            phone_no                = data['Company Contact No'],
+                            created_by              = request.user
                         )
-                        gtcc.active_contact_person = active_contact_person
-                        gtcc.save()
-                        response_data.append(gtcc)
+                    active_contact_person = Account.objects.create(
+                        email               =   invitee_email,
+                        username            =   invitee_email,
+                        first_name          =   first_name_temp,
+                        last_name           =   last_name_temp,
+                        contact_number      =   data['Contact Number'],
+                        emirate             =   data['Emirate Id'],
+                        designation         =   designation,
+                        inviter             =   request.user,
+                        link_id             =   gtcc.id,
+                        link_class          =   'GTCC',
+                        user_class          =   'GTCC',
+                        user_type           =   'User',
+                        inviting_key        =   get_random_string(64).lower(),
+                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                    )
+                    gtcc.active_contact_person = active_contact_person
+                    gtcc.save()
+                    response_data.append(gtcc)
+                    
             return Response(GTCCListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)

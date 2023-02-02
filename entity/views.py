@@ -133,36 +133,65 @@ class EntityDetails(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ValidateImportEntity(APIView):
+
     def post(self, request):
         datas           = request.data
         response_data   = []
         exist_count     = 0
         try:
             for data in datas:
-                invitee_email                   = data['Contact Person Email Id']
-                designation                     = data['Designation']
-                sub_area                        = data['Sub Area']
-                sub_category                    = data['Sub Category']
-                data['email_status']            = ""
-                data['designation_status']      = ""
-                data['sub_area_status']         = ""
-                data['sub_category_status']     = ""
-                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
-                if email_serializer.is_valid():
-                    data['email_status'] = email_serializer.errors
+                invitee_email                       = data['Contact Person Email Id']
+                designation                         = data['Designation']
+                establishment_name                  = data['Establishment Name']
+                sub_area                            = data['Sub Area']
+                sub_category                        = data['Sub Category']
+                emirate_id                          = data['Emirate Id']
+                foodwatch_business_id               = data['FoodWatch Business Id'],
+                foodwatch_id                        = data['FoodWatch Id'],
+                data['establishment_name_status']   = ""
+                data['email_status']                = ""
+                data['designation_status']          = ""
+                data['sub_area_status']             = ""
+                data['sub_category_status']         = ""
+                data['foodwatch_business_id_status']= ""
+                data['foodwatch_id_status']         = ""
+                data['is_verified']                 = True
+                if establishment_name is None:
+                    data['establishment_name_status'] = "Establishment name is required"
                     exist_count = exist_count + 1
+                    data['is_verified']               = False
+                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
+                if not email_serializer.is_valid():
+                    data['email_status'] = "Email already exist/ Invalid email"
+                    exist_count = exist_count + 1
+                    data['is_verified']               = False
                 designation = Designation.objects.filter(designation=designation).first()
-                if designation is not None:
+                if designation is None:
                     data['designation_status'] = "Designation not found"
                     exist_count = exist_count + 1
+                    data['is_verified']               = False
+                if not type(foodwatch_business_id[0]) == int:
+                    data['foodwatch_business_id_status'] = "Integer value only"
+                    exist_count = exist_count + 1
+                    data['is_verified']               = False
+                if not type(foodwatch_id[0]) == int:
+                    data['foodwatch_id_status'] = "Integer value only"
+                    exist_count = exist_count + 1
+                    data['is_verified']               = False
+                if len(emirate_id) > 15:
+                    data['emirate_id_status'] = "Invalid emirate id"
+                    exist_count = exist_count + 1
+                    data['is_verified']               = False
                 sub_area    = SubArea.objects.filter(sub_area=sub_area).first()
-                if sub_area is not None:
+                if sub_area is None:
                     data['sub_area_status'] = "Sub area not found"
                     exist_count = exist_count + 1
+                    data['is_verified']               = False
                 sub_category = SubCategory.objects.filter(sub_category=sub_category).first()
-                if sub_category is not None:
+                if sub_category is None:
                     data['sub_category_status'] = "Sub category not found"
                     exist_count = exist_count + 1
+                    data['is_verified']               = False
                 response_data.append(data)
             data = {
                 "entity_count"  : len(datas),
@@ -181,57 +210,145 @@ class ImportEntity(APIView):
         response_data   = []
         try:
             for data in datas['received_file']:
-                invitee_email       = data['Contact Person Email Id']
-                email_serializer    = AccountEmailSerializer(data = {"email" :invitee_email})
-                if email_serializer.is_valid():
+                is_verified                     = data['is_verified']
+                if is_verified:
+                    invitee_email                   = data['Contact Person Email Id']
                     first_name_temp, last_name_temp = name_maker(data['Contact Person'])
+                    emirate_id                  = data['Emirate Id']
+                    establishment_name          = data['Establishment Name']
                     contact_person_designation  = data['Designation']
                     sub_area_name               = data['Sub Area']
                     sub_category_name           = data['Sub Category']
+                    foodwatch_business_id       = data['FoodWatch Business Id'],
+                    foodwatch_id                = data['FoodWatch Id'],
                     designation                 = Designation.objects.filter(designation=contact_person_designation).first()
                     sub_area                    = SubArea.objects.filter(sub_area=sub_area_name).first()
                     sub_category                = SubCategory.objects.filter(sub_category=sub_category_name).first()
-                    if sub_category != None and sub_area != None:
-                        entity = Entity.objects.create(
-                            establishment_name      = data['Establishment Name'],
-                            trade_license_name      = data['Entity License Name'],
-                            trade_license_no        = data['Trade License No'],
-                            foodwatch_business_id   = data['FoodWatch Business Id'],
-                            foodwatch_id            = data['FoodWatch Id'],
-                            env_sap_id              = data['Entity Sap Id'],
-                            makhani_no              = data['Makani No'],
-                            location                = data['Entity Location'],
-                            google_location         = data['Google Location'],
-                            gps_coordinates         = data['Co-ordinates'],
-                            office_email            = data['Establishment Email'],
-                            po_box                  = data['PO Box'],
-                            phone_no                = data['Establishment Phone No'],
-                            zone                    = sub_area.zone,
-                            area                    = sub_area.area,
-                            subarea                 = sub_area,
-                            category                = sub_category.main_category,
-                            sub_category            = sub_category,
-                        )
-                        active_contact_person = Account.objects.create(
-                            email               =   invitee_email,
-                            username            =   invitee_email,
-                            first_name          =   first_name_temp,
-                            last_name           =   last_name_temp,
-                            contact_number      =   data['Contact Number'],
-                            emirate             =   data['Emirate Id'],
-                            designation         =   designation,
-                            inviter             =   request.user,
-                            link_id             =   entity.id,
-                            link_class          =   'Entity',
-                            user_class          =   'Entity',
-                            user_type           =   'User',
-                            inviting_key        =   get_random_string(64).lower(),
-                            invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
-                        )
-                        entity.active_contact_person = active_contact_person
-                        entity.save()
-                        response_data.append(entity)
+                    entity = Entity.objects.create(
+                        establishment_name      = establishment_name,
+                        trade_license_name      = data['Entity License Name'],
+                        trade_license_no        = data['Trade License No'],
+                        foodwatch_business_id   = foodwatch_business_id[0],
+                        foodwatch_id            = foodwatch_id[0],
+                        env_sap_id              = data['Entity Sap Id'],
+                        makhani_no              = data['Makani No'],
+                        entity_location         = data['Entity Location'],
+                        google_location         = data['Google Location'],
+                        gps_coordinates         = data['Co-ordinates'],
+                        office_email            = data['Establishment Email'],
+                        po_box                  = data['PO Box'],
+                        phone_no                = data['Establishment Phone No'],
+                        zone                    = sub_area.zone,
+                        area                    = sub_area.area,
+                        subarea                 = sub_area,
+                        category                = sub_category.main_category,
+                        sub_category            = sub_category,
+                        created_by              = request.user,
+                    )
+                    active_contact_person = Account.objects.create(
+                        email               =   invitee_email,
+                        username            =   invitee_email,
+                        first_name          =   first_name_temp,
+                        last_name           =   last_name_temp,
+                        contact_number      =   data['Contact Number'],
+                        emirate             =   emirate_id,
+                        designation         =   designation,
+                        inviter             =   request.user,
+                        link_id             =   entity.id,
+                        link_class          =   'Entity',
+                        user_class          =   'Entity',
+                        user_type           =   'User',
+                        inviting_key        =   get_random_string(64).lower(),
+                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),
+                    )
+                    entity.active_contact_person = active_contact_person
+                    entity.save()
+                    response_data.append(entity)
             return Response(EntityListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
+
+class ValidateImportEntityGreaseTrap(APIView):
+    
+    def post(self, request):
+        datas           = request.data
+        response_data   = []
+        exist_count     = 0
+        try:
+            for data in datas:
+                entity_name                         = data['Entity Name']
+                trap_type                           = data['Trap Type']
+                qty                                 = data['Qty']
+                frequency                           = data['Frequency']
+                last_cleaning_date                  = data['Last Cleaning Date']
+                data['entity_name_status']          = ""
+                data['trap_type_status']            = ""
+                data['qty_status']                  = ""
+                data['frequency_status']            = ""
+                data['last_cleaning_date_status']   = ""
+                data['is_verified']                 = True
+                entity = Entity.objects.filter(establishment_name=entity_name).first()
+                if entity is None:
+                    data['entity_name_status'] = "Entity not found"
+                    exist_count = exist_count + 1
+                    data['is_verified']                 = False
+                grease_trap = GreaseTrap.objects.filter(description=trap_type).first()
+                if grease_trap is None:
+                    data['trap_type_status'] = "Grease trap not found"
+                    exist_count = exist_count + 1
+                    data['is_verified']                 = False
+                if qty is None:
+                    data['qty_status'] = "Qty is required"
+                    exist_count = exist_count + 1
+                    data['is_verified']                 = False
+                if frequency is None:
+                    data['frequency_status'] = "Frequency is required"
+                    exist_count = exist_count + 1
+                    data['is_verified']                 = False
+                if last_cleaning_date is None:
+                    data['last_cleaning_date_status'] = "Last cleaning date is required"
+                    exist_count = exist_count + 1
+                    data['is_verified']                 = False
+                response_data.append(data)
+            data = {
+                "grease_trap_count"     : len(datas),
+                "exist_count"           : exist_count,
+                "grease_trap_list"      : response_data
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
+
+class ImportEntityGreaseTrap(APIView):
+
+    @transaction.atomic
+    def post(self, request):
+        datas           = request.data
+        response_data   = []
+        try:
+            for data in datas['received_file']:
+                is_verified                 = data['is_verified']
+                if is_verified:
+                    entity_name                 = data['Entity Name']
+                    trap_type                   = data['Trap Type']
+                    qty                         = data['Qty']
+                    frequency                   = data['Frequency']
+                    last_cleaning_date          = data['Last Cleaning Date']
+                    entity                      = Entity.objects.filter(establishment_name=entity_name).first()
+                    grease_trap                 = GreaseTrap.objects.filter(description=trap_type).first()
+                    last_cleaning_date = datetime.datetime.strptime(last_cleaning_date, "%m-%d-%Y").date()
+                    for i in range(qty): 
+                        entity_grease_trap = EntityGreaseTrap.objects.create(
+                            entity                  = entity,
+                            grease_trap             = grease_trap,
+                            capacity                = grease_trap.capacity,
+                            label                   = grease_trap.description,
+                            cleaning_frequency      = frequency,
+                            last_cleaning_date      = last_cleaning_date,
+                            created_by              = request.user,
+                        )
+                        response_data.append(entity_grease_trap)
+            return Response(EntityGreaseTrapListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 

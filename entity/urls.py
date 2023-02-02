@@ -18,4 +18,8 @@ urlpatterns = [
     path('entity_with_grease_traps', EntityWithGreaseTraps.as_view()),
     path('convert_coupon_to_sr', ConvertCouponToSR.as_view()),
     path('service_request_log/<int:service_request_id>', ServiceRequestLogList.as_view()),
+    path('validate_import_entity', ValidateImportEntity.as_view()),
+    path('import_entity', ImportEntity.as_view()),
+    path('validate_import_entity_grease_trap', ValidateImportEntityGreaseTrap.as_view()),
+    path('import_entity_grease_trap', ImportEntityGreaseTrap.as_view()),
 ]
