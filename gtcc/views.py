@@ -1701,7 +1701,7 @@ class EditCouponGallons(APIView):
             unit_price_model, _      = Unitprice.objects.get_or_create()
             unit_price               = unit_price_model.unit_price
             vat                      = 0.05
-            total_fee_for_dumping    = decimal.Decimal(total_gallons) * decimal.Decimal(unit_price) * decimal.Decimal(1+vat)
+            total_fee_for_dumping    = round(decimal.Decimal(total_gallons) * decimal.Decimal(unit_price) * decimal.Decimal(1+vat),2)
             
             if (total_fee_for_dumping > float(gtcc.credit_available)):
                 return Response({'error' : 'Insufficient balance !'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1713,7 +1713,7 @@ class EditCouponGallons(APIView):
             coupon.save()
             EditCouponLog.objects.create(
                 coupon = coupon,
-                change = f'Total gallons edited from {coupon_total_gallons} gallons to {total_gallons} gallons and the corresponding dumping fee changed from {coupon_total_dumping_fee} AED to {dumping_vehicledetails.total_dumping_fee} AED',
+                change = f'Total gallons edited from {coupon_total_gallons} gallons to {total_gallons} gallons and the corresponding dumping fee changed from {coupon_total_dumping_fee} AED to {total_fee_for_dumping} AED',
                 edited_by = request.user
             )
             amount           = total_fee_for_dumping - coupon_total_dumping_fee
