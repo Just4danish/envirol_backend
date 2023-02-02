@@ -129,11 +129,7 @@ class GreaseTrapList(APIView):
     def post(self, request):
         serializer = GreaseTrapPostSerializer(data=request.data)
         if serializer.is_valid():
-            try:
-                max_id = GreaseTrap.objects.latest('id').id + 1
-            except GreaseTrap.DoesNotExist:
-                max_id = 1
-            data = serializer.save(grease_trap_id = 1000+max_id, created_by = request.user)
+            data = serializer.save(created_by = request.user)
             return Response(GreaseTrapListSerializer(data).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

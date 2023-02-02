@@ -60,6 +60,16 @@ class GreaseTrap(models.Model):
     modified_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10, choices=choices, default='Active')
 
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            try:
+                max_id = GreaseTrap.objects.latest('id').id + 1
+            except GreaseTrap.DoesNotExist:
+                max_id = 1
+            self.grease_trap_id  = "TP" + str("{:04d}".format(max_id))
+            super().save(*args, **kwargs)
+        return self
+
 class Fixture(models.Model):
     fixture_id = models.CharField(max_length=100, unique=True)
     fixture = models.CharField(max_length=100, unique=True)
