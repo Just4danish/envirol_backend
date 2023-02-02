@@ -816,6 +816,7 @@ class ConvertCouponToSR(APIView):
             return Response({'error' : 'Only used coupons can be converted'}, status=status.HTTP_400_BAD_REQUEST)
         if total_gallons != coupon.total_gallons:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
+        service_request_date = datetime.datetime.strptime(service_request_date, '%Y-%m-%d %H:%M')
         if service_request_date >= coupon.returned_on:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
             
