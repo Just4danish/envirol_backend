@@ -809,19 +809,7 @@ class ConvertCouponToSR(APIView):
         vehicle                 = dumping_vehicledetails.vehicle
         driver                  = dumping_vehicledetails.driver
         operator                = dumping_vehicledetails.operator
-        serializer =  ServiceRequestPostSerializer(
-                            data                    = request.data,
-                            vehicle                 = vehicle,
-                            driver                  = driver,
-                            operator                = operator,
-                            dumping_vehicledetails  = dumping_vehicledetails,
-                            created_by              = request.user,
-                            collection_completion_time = service_request_date,
-                            created_date                = service_request_date,
-                            status                      = 'Discharged',
-                            initiator                   = 'CPN',
-                            sr_grease_trap_status       = 'Completed'
-                        )
+        serializer =  ServiceRequestPostSerializer(data = request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         if coupon.status != 'Used':
@@ -831,7 +819,18 @@ class ConvertCouponToSR(APIView):
         if service_request_date >= coupon.returned_on:
             return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
             
-        service_request    = serializer.save(created_by = request.user)
+        service_request    = serializer.save(
+                                vehicle                     = vehicle,
+                                driver                      = driver,
+                                operator                    = operator,
+                                dumping_vehicledetails      = dumping_vehicledetails,
+                                created_by                  = request.user,
+                                collection_completion_time  = service_request_date,
+                                created_date                = service_request_date,
+                                status                      = 'Discharged',
+                                initiator                   = 'CPN',
+                                sr_grease_trap_status       = 'Completed'
+                            )
 
         coupon.converted_on     = timezone.now()
         coupon.converted_by     = request.user

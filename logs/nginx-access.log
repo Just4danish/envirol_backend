@@ -9978,3 +9978,7 @@
 87.236.176.16 - - [02/Feb/2023:11:19:10 +0400] "GET / HTTP/1.1" 404 2492 "-" "Mozilla/5.0 (compatible; InternetMeasurement/1.0; +https://internet-measurement.com/)"
 185.224.128.224 - - [02/Feb/2023:11:22:19 +0400] "GET / HTTP/1.1" 404 13214 "-" "libwww-perl/6.67"
 66.240.205.34 - - [02/Feb/2023:12:46:54 +0400] "Gh0st\xAD\x00\x00\x00\xE0\x00\x00\x00x\x9CKS``\x98\xC3\xC0\xC0\xC0\x06\xC4\x8C@\xBCQ\x96\x81\x81\x09H\x07\xA7\x16\x95e&\xA7*\x04$&g+\x182\x94\xF6\xB000\xAC\xA8rc\x00\x01\x11\xA0\x82\x1F\x5C`&\x83\xC7K7\x86\x19\xE5n\x0C9\x95n\x0C;\x84\x0F3\xAC\xE8sch\xA8^\xCF4'J\x97\xA9\x82\xE30\xC3\x91h]&\x90\xF8\xCE\x97S\xCBA4L?2=\xE1\xC4\x92\x86\x0B@\xF5`\x0CT\x1F\xAE\xAF]" 400 166 "-" "-"
+162.243.143.25 - - [02/Feb/2023:13:23:51 +0400] "GET /autodiscover/autodiscover.json?@zdi/Powershell HTTP/1.1" 502 166 "-" "Mozilla/5.0 zgrab/0.x"
+185.100.87.136 - - [02/Feb/2023:14:11:37 +0400] "aaaabbbbccccdddd\x00\x00\x00\x00\x00\x00\x00\x00,k\x00\x00\x04\x00\x00\x00\x92\x10" 400 166 "-" "-"
+185.100.87.136 - - [02/Feb/2023:14:11:37 +0400] "\x10 \x00\x00BBBB\xBA\x8C\xC1\xABDAAA" 400 166 "-" "-"
+185.100.87.136 - - [02/Feb/2023:14:11:37 +0400] "POST /index.htm HTTP/1.1" 400 666 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36"
