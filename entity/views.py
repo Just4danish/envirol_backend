@@ -821,7 +821,7 @@ class ConvertCouponToSR(APIView):
         utc                  = pytz.UTC
         service_request_date = utc.localize(service_request_date)
         if service_request_date >= coupon.returned_on:
-            return Response({'error' : 'Selected grease trap total gallon does not match with coupon total gallon'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error' : 'service request date should be less than coupon returned date'}, status=status.HTTP_400_BAD_REQUEST)
             
         service_request    = serializer.save(
                                 vehicle                     = vehicle,
