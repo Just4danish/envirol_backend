@@ -956,3 +956,55 @@ def initiate_mode_of_payments():
         is_editable = False,
         created_by_id = 1,
     )
+
+def initiate_foodwatch_subcategories():
+    # SubCategory.objects.all().delete()
+    entities_excel  = os.path.join(settings.BASE_DIR,'abacimodules','excels','Sub-Categories.xlsx')
+    xlsx            = pd.ExcelFile(entities_excel)
+    df              = xlsx.parse(0)
+    for index, row in df.iterrows():
+        try:
+            main_category, created = MainCategory.objects.get_or_create(
+                main_category = row['Category'],
+                created_by_id = 1,
+            )
+            SubCategory.objects.create(
+                main_category   = main_category,
+                sub_category    = row['Sub Category'],
+                foodwatch_id    = row['Foodwatch Id'],
+                foodwatch_name  = row['Foodwatch Name'],
+                created_by_id   = 1,
+            )
+        except:
+            pass
+    print("sub categories uploaded successfully")
+
+def initiate_foodwatch_subareas():
+    # SubArea.objects.all().delete()
+    entities_excel = os.path.join(settings.BASE_DIR,'abacimodules','excels','Sub-Areas.xlsx')
+    xlsx = pd.ExcelFile(entities_excel)
+    df = xlsx.parse(0)
+    for index, row in df.iterrows():
+        try:
+            zone, zone_created = Zone.objects.get_or_create(
+                zone_no         = row['Zone'],
+                zone_name       = row['Zone'],
+                created_by_id   = 1,
+            )
+            area, area_created = Area.objects.get_or_create(
+                zone            = zone, 
+                area_code       = row['Area'],
+                area            = row['Area'],
+                created_by_id   = 1,
+            )
+            SubArea.objects.get_or_create(
+                zone            = zone,
+                area            = area,
+                sub_area        = row['Sub Area'],
+                foodwatch_id    = row['Foodwatch Id'],
+                foodwatch_name  = row['Foodwatch Name'],
+                created_by_id   = 1,
+            )
+        except:
+            pass
+    print("sub areas uploaded successfully")
