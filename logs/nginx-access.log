@@ -10058,3 +10058,4 @@
 193.35.18.108 - - [03/Feb/2023:13:26:59 +0400] "POST /ztp/cgi-bin/handler HTTP/1.1" 404 13309 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
 162.243.131.19 - - [03/Feb/2023:14:18:20 +0400] "GET /autodiscover/autodiscover.json?@zdi/Powershell HTTP/1.1" 404 2541 "-" "Mozilla/5.0 zgrab/0.x"
 192.241.209.94 - - [03/Feb/2023:15:08:28 +0400] "MGLNDD_65.109.160.214_443" 400 166 "-" "-"
+128.1.248.42 - - [03/Feb/2023:16:22:16 +0400] "GET / HTTP/1.1" 404 2490 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"

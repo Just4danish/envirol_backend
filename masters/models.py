@@ -43,7 +43,7 @@ class GreaseTrap(models.Model):
     foodwatch_id = models.CharField(max_length=100, unique=True, null=True)
     part_no = models.CharField(max_length=100)
     description = models.CharField(max_length=250, null=True)
-    capacity = models.DecimalField(max_digits=6, decimal_places=2)
+    capacity = models.DecimalField(max_digits=10, decimal_places=2)
     material = models.CharField(max_length=100)
     shape = models.CharField(max_length=100)
     manufacturer = models.CharField(max_length=100)
