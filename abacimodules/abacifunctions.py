@@ -432,21 +432,21 @@ def initiate_greasetraps():
     grease_traps = greaseTrapTypes
     for item in grease_traps:
         GreaseTrap.objects.create(
-        grease_trap_id	=	item['grease_trap_id'],
-        foodwatch_id	=	item['foodwatch_id'],
-        part_no	=	item['part_no'],
-        description	=	item['trap_label'],
-        capacity	=	item['capacity'],
-        material	=	item['material'],
-        shape	=	item['shape'],
-        manufacturer	=	item['manufacturer'],
-        width	=	item['width'],
-        length	=	item['length'],
-        height	=	item['length']*2,
-        height_to_outlet_pipe	=	item['length']*2 - 2,
-        image	=	item['image'],
-        remarks	=	item['remarks'],
-        created_by	= get_a_user()
+            grease_trap_id	    =	item['grease_trap_id'],
+            foodwatch_id	    =	item['foodwatch_id'],
+            part_no	            =	item['part_no'],
+            description	        =	item['trap_label'],
+            capacity	        =	item['capacity'],
+            material	        =	item['material'],
+            shape	            =	item['shape'],
+            manufacturer	    =	item['manufacturer'],
+            width	            =	item['width'],
+            length	            =	item['length'],
+            height	            =	item['length']*2,
+            height_to_outlet_pipe	=	item['length']*2 - 2,
+            image	            =	item['image'],
+            remarks	            =	item['remarks'],
+            created_by	        = get_a_user()
         )
 
 def add_greasetraps_to_entity_randomly():
