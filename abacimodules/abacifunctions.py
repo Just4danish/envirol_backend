@@ -969,11 +969,13 @@ def initiate_foodwatch_subcategories():
                 created_by_id = 1,
             )
             SubCategory.objects.create(
-                main_category   = main_category,
-                sub_category    = row['Sub Category'],
-                foodwatch_id    = row['Foodwatch Id'],
-                foodwatch_name  = row['Foodwatch Name'],
-                created_by_id   = 1,
+                main_category       = main_category,
+                sub_category        = row['Sub Category'],
+                foodwatch_id        = row['Foodwatch Id'],
+                foodwatch_name      = row['Foodwatch Name'],
+                foodwatch_sub_id    = row['Foodwatch Sub Id'],
+                foodwatch_sub_name  = row['Foodwatch Sub Name'],
+                created_by_id       = 1,
             )
         except:
             pass

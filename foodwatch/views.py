@@ -230,9 +230,10 @@ def sync_foodwatch_enitity(request):
                 for PageIndex in range(pages):
                     result = json_object['Result']
                     if result is not None:
-                        entity_list = result['EntityList']
+                        entity_list   = result['EntityList']
                         for entity in entity_list:
-                            entity_class_id         = entity['UAERegionId']
+                            entity_class_id         = entity['EntityClassId']
+                            sub_category_id         = entity['SubCategoryId']
                             uae_region_id           = entity['UAERegionId']
                             foodwatch_id            = entity['FoodwatchId']
                             name_of_establishment   = entity['NameOfEstablishment']
@@ -244,7 +245,7 @@ def sync_foodwatch_enitity(request):
                             office_email            = entity['OfficeEmail']
                             makani_nr               = entity['MakaniNr'] if entity['MakaniNr'] else 0
                             gtcc_foodwatch_id       = entity['GTTCFoodwatchId'] if entity['GTTCFoodwatchId'] else 0
-                            fogwatch_sub_category   = SubCategory.objects.filter(foodwatch_id=entity_class_id).first()
+                            fogwatch_sub_category   = SubCategory.objects.filter(foodwatch_id=entity_class_id, foodwatch_sub_id=sub_category_id).first()
                             fogwatch_sub_area       = SubArea.objects.filter(foodwatch_id=uae_region_id).first()
                             entity                  = Entity.objects.filter(foodwatch_id=foodwatch_id).first()
                             if entity == None:
@@ -296,7 +297,7 @@ def sync_foodwatch_enitity(request):
                                 latitue_longitude       = entity['LatitueLongitude'],
                                 category_id             = entity['CategoryId'],
                                 category                = entity['Category'],
-                                sub_category_id         = entity['SubCategoryId'],
+                                sub_category_id         = sub_category_id,
                                 sub_category            = entity['SubCategory'],
                                 website_url             = entity['WebsiteUrl'],
                                 office_mobile           = entity['OfficeMobile'],

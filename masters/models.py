@@ -22,6 +22,8 @@ class SubCategory(models.Model):
     sub_category = models.CharField(max_length=100)
     foodwatch_id = models.IntegerField(null=True)
     foodwatch_name = models.CharField(max_length=100, null=True)
+    foodwatch_sub_id = models.IntegerField(null=True)
+    foodwatch_sub_name = models.CharField(max_length=100, null=True)
     created_by = models.ForeignKey(Account, related_name='sub_category_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='sub_category_modified_by', on_delete=models.CASCADE, null=True)

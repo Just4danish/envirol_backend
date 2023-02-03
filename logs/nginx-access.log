@@ -10059,3 +10059,5 @@
 162.243.131.19 - - [03/Feb/2023:14:18:20 +0400] "GET /autodiscover/autodiscover.json?@zdi/Powershell HTTP/1.1" 404 2541 "-" "Mozilla/5.0 zgrab/0.x"
 192.241.209.94 - - [03/Feb/2023:15:08:28 +0400] "MGLNDD_65.109.160.214_443" 400 166 "-" "-"
 128.1.248.42 - - [03/Feb/2023:16:22:16 +0400] "GET / HTTP/1.1" 404 2490 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"
+138.197.66.194 - - [03/Feb/2023:16:45:01 +0400] "CONNECT google.com:443 HTTP/1.1" 400 166 "-" "-"
+185.180.143.7 - - [03/Feb/2023:17:04:41 +0400] "GET / HTTP/1.1" 502 568 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"
