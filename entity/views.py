@@ -159,40 +159,34 @@ class ValidateImportEntity(APIView):
                 data['is_verified']                 = True
                 if establishment_name is None:
                     data['establishment_name_status'] = "Establishment name is required"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
                 if not email_serializer.is_valid():
                     data['email_status'] = "Email already exist/ Invalid email"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 designation = Designation.objects.filter(designation=designation).first()
                 if designation is None:
                     data['designation_status'] = "Designation not found"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 if not type(foodwatch_business_id[0]) == int:
                     data['foodwatch_business_id_status'] = "Integer value only"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 if not type(foodwatch_id[0]) == int:
                     data['foodwatch_id_status'] = "Integer value only"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 if len(emirate_id) > 15:
                     data['emirate_id_status'] = "Invalid emirate id"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 sub_area    = SubArea.objects.filter(sub_area=sub_area).first()
                 if sub_area is None:
                     data['sub_area_status'] = "Sub area not found"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 sub_category = SubCategory.objects.filter(sub_category=sub_category).first()
                 if sub_category is None:
                     data['sub_category_status'] = "Sub category not found"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
+                if data['is_verified'] == False:
+                    exist_count = exist_count + 1
                 response_data.append(data)
             data = {
                 "entity_count"  : len(datas),
@@ -291,25 +285,22 @@ class ValidateImportEntityGreaseTrap(APIView):
                 entity = Entity.objects.filter(establishment_name=entity_name).first()
                 if entity is None:
                     data['entity_name_status'] = "Entity not found"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 grease_trap = GreaseTrap.objects.filter(description=trap_type).first()
                 if grease_trap is None:
                     data['trap_type_status'] = "Grease trap not found"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 if qty is None:
                     data['qty_status'] = "Qty is required"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 if frequency is None:
                     data['frequency_status'] = "Frequency is required"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 if last_cleaning_date is None:
                     data['last_cleaning_date_status'] = "Last cleaning date is required"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
+                if data['is_verified'] == False:
+                    exist_count = exist_count + 1
                 response_data.append(data)
             data = {
                 "grease_trap_count"     : len(datas),

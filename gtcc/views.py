@@ -183,34 +183,29 @@ class ValidateImportGTCC(APIView):
                 data['is_verified']                 = True
                 if establishment_name is None:
                     data['establishment_name_status'] = "Establishment name is required"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 if trade_license_no is None:
                     data['trade_license_no_status'] = "Trade license no is required"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
                 if not email_serializer.is_valid():
                     data['email_status'] = "Email already exist/ Invalid email"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 designation = Designation.objects.filter(designation=designation).first()
                 if designation is None:
                     data['designation_status'] = "Designation not found"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
                 if not type(foodwatch_business_id[0]) == int:
                     data['foodwatch_business_id_status'] = "Integer value only"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 if not type(foodwatch_id[0]) == int:
                     data['foodwatch_id_status'] = "Integer value only"
-                    exist_count = exist_count + 1
                     data['is_verified']               = False
                 if len(emirate_id) > 15:
                     data['emirate_id_status'] = "Invalid emirate id"
-                    exist_count = exist_count + 1
                     data['is_verified']                 = False
+                if data['is_verified'] == False:
+                    exist_count = exist_count + 1
                 response_data.append(data)
             data = {
                 "gtcc_count"  : len(datas),
