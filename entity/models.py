@@ -51,6 +51,15 @@ class Entity(models.Model):
     class Meta:
         ordering = ('id',)
 
+    def save(self, *args, **kwargs):
+        sub_category    = self.sub_category
+        subarea         = self.subarea
+        self.category   = sub_category.main_category
+        self.area       = subarea.area
+        self.zone       = subarea.zone
+        super().save(*args, **kwargs)
+        return self
+
 class EntityLog(models.Model):
     action_choices = [('Created','Created'),('Activated','Activated'),('Updated','Updated'),('UpdateApproved','UpdateApproved'),('UpdateRejected','UpdateRejected'),('Deactivated','Deactivated')]
     action_taken = models.CharField(max_length=10, choices=choices)

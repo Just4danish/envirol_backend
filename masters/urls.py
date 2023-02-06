@@ -18,6 +18,7 @@ urlpatterns = [
     path('area/<int:pk>', AreaDetails.as_view()),
     path('subarea', SubAreaList.as_view()),
     path('subarea/<int:pk>', SubAreaDetails.as_view()),
+    path('subarea_dropdown_list', SubAreaDropdownList.as_view()),
     path('designation', DesignationList.as_view()),
     path('designation/<int:pk>', DesignationDetails.as_view()),
     path('gate', GateList.as_view()),

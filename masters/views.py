@@ -1,10 +1,11 @@
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from .models import *
 from .serializers import *
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics, filters
 from django.utils import timezone
+import pandas as pd
 
 class MainCategoryList(APIView):
 
@@ -44,9 +45,21 @@ class MainCategoryDetails(APIView):
 class SubCategoryList(APIView):
 
     def get(self, request):
-        data = SubCategory.objects.exclude(status="Deleted")
-        serializer = SubCategoryListSerializer(data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        limited = request.GET.get('limited', False)
+        data = SubCategory.objects.exclude(status="Deleted").select_related('main_category')
+        if limited:
+            dp_list = []
+            for sub_category in data:
+                dp_list.append(
+                    {
+                        "id"            : sub_category.id,
+                        "sub_category"  : f'{sub_category.sub_category} < {sub_category.main_category.main_category}'
+                    }
+                )
+            serializer = dp_list
+        else:
+            serializer = SubCategoryListSerializer(data, many=True).data
+        return Response(serializer, status=status.HTTP_200_OK)
     
     def post(self, request):
         serializer = SubCategoryPostSerializer(data=request.data)
@@ -263,12 +276,95 @@ class AreaDetails(APIView):
             return Response(AreaListSerializer(data).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class SubAreaList(APIView):
+class SubAreaList(generics.ListCreateAPIView):
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    fields   = [
+                    'zone__zone_no',
+                    'zone__zone_name',
+                    'area__area_code',
+                    'area__area',
+                    'sub_area',
+                    'foodwatch_id',
+                    'foodwatch_name',
+                    'status',
+                ]
+    search_fields   = fields
+    ordering_fields = fields
+    serializer_class = SubAreaListSerializer
+
+    def get_queryset(self):
+        queryset = SubArea.objects.exclude(status="Deleted")
+        zone__zone_no = self.request.query_params.get('zone__zone_no')
+        if zone__zone_no is not None:
+            queryset = queryset.filter(zone__zone_no=zone__zone_no)
+        zone__zone_name = self.request.query_params.get('zone__zone_name')
+        if zone__zone_name is not None:
+            queryset = queryset.filter(zone__zone_name__icontains=zone__zone_name)
+        area__area_code = self.request.query_params.get('area__area_code')
+        if area__area_code is not None:
+            queryset = queryset.filter(area__area_code=area__area_code)
+        area__area = self.request.query_params.get('area__area')
+        if area__area is not None:
+            queryset = queryset.filter(area__area__icontains=area__area)
+        sub_area = self.request.query_params.get('sub_area')
+        if sub_area is not None:
+            queryset = queryset.filter(sub_area__icontains=sub_area)
+        foodwatch_id = self.request.query_params.get('foodwatch_id')
+        if foodwatch_id is not None:
+            queryset = queryset.filter(foodwatch_id=foodwatch_id)
+        foodwatch_name = self.request.query_params.get('foodwatch_name')
+        if foodwatch_name is not None:
+            queryset = queryset.filter(foodwatch_name__icontains=foodwatch_name)
+        status = self.request.query_params.get('status')
+        if status is not None:
+            queryset = queryset.filter(status__icontains=status)
+        return queryset
+
+    def get_df(self):
+        self.pagination_class = None
+        records = self.filter_queryset(self.get_queryset())
+        df_records = pd.DataFrame.from_records(records.values_list(*self.fields))
+        columns_records  = [
+                                'Zone No',
+                                'Zone Name', 
+                                'Area Code',
+                                'Area', 
+                                'Sub Area', 
+                                'Foodwatch Id', 
+                                'Foodwatch Name',
+                                'Status',
+                            ]
+        df_records.set_axis(columns_records, axis=1, inplace=True)
+        return df_records
 
     def get(self, request):
-        data = SubArea.objects.exclude(status="Deleted")
-        serializer = SubAreaListSerializer(data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        pdf_download = request.GET.get('pdf_download')
+        csv_download = request.GET.get('csv_download')
+        if (csv_download != None):
+            df = self.get_df()
+            df.set_index('Zone No', inplace=True)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=file.csv'
+            df.to_csv(path_or_buf=response)
+            return response
+        elif (pdf_download != None):
+            df = self.get_df()
+            header = {
+                'Zone No' : 'Zone No',
+                'Zone Name' : 'Zone Name',
+                'Area Code' : 'Area Code',
+                'Area' : 'Area',
+                'Sub Area' : 'Sub Area',
+                'Foodwatch Id' : 'Foodwatch Id',
+                'Foodwatch Name' : 'Foodwatch Name',
+                'Status' : 'Status'
+            }
+            data = {
+                "header" : header,
+                "body" : df.to_dict(orient='records'),
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        return super(SubAreaList, self).get(request)
     
     def post(self, request):
         serializer = SubAreaPostSerializer(data=request.data)
@@ -297,6 +393,21 @@ class SubAreaDetails(APIView):
             serializer.save(modified_by = request.user)
             return Response(SubAreaListSerializer(data).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SubAreaDropdownList(APIView):
+
+    def get(self, request):
+        sub_areas = SubArea.objects.exclude(status="Deleted").select_related('area', 'zone')
+        dp_list = []
+        for sub_area in sub_areas:
+            dp_list.append(
+                {
+                    "id"        : sub_area.id,
+                    "sub_area"  : f'{sub_area.sub_area} < {sub_area.area.area} < {sub_area.zone.zone_name}'
+                }
+            )
+        # serializer = SubAreaLimitedSerializer(data, many=True)
+        return Response(dp_list, status=status.HTTP_200_OK)
 
 class DesignationList(APIView):
 

@@ -25,6 +25,11 @@ class SubCategoryListSerializer(serializers.ModelSerializer):
         model = SubCategory
         exclude = common_exclude_list
 
+class SubCategoryLimitedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubCategory
+        fields = ['id', 'sub_category']
+
 class ModeOfPaymentPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModeOfPayment
@@ -91,6 +96,11 @@ class SubAreaListSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubArea
         exclude = ['created_by', 'created_date', 'modified_by', 'modified_date', 'zone']
+
+class SubAreaLimitedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubArea
+        fields = ['id', 'sub_area']
 
 class DesignationPostSerializer(serializers.ModelSerializer):
     class Meta:

@@ -129,7 +129,7 @@ class EntityPostSerializer(serializers.ModelSerializer):
              
     class Meta:
         model = Entity
-        exclude = ['random_key', 'created_by']
+        exclude = ['zone', 'area', 'category', 'random_key', 'created_by']
 
 class EntityFixturePostSerializer(serializers.ModelSerializer):
     class Meta:

@@ -37,3 +37,12 @@ class FoodwatchEntity(models.Model):
     is_convertable = models.BooleanField(default=False)
     status_choices = [('Pending', 'Pending'), ('Synced', 'Synced'), ('Converted', 'Converted'), ('Deleted', 'Deleted')]
     status = models.CharField(max_length=10, choices=status_choices, default='Pending')
+
+    def save(self, *args, **kwargs):
+        fogwatch_sub_category    = self.fogwatch_sub_category
+        fogwatch_sub_area        = self.fogwatch_sub_area
+        self.fogwatch_category   = fogwatch_sub_category.main_category
+        self.fogwatch_area       = fogwatch_sub_area.area
+        self.fogwatch_zone       = fogwatch_sub_area.zone
+        super().save(*args, **kwargs)
+        return self
