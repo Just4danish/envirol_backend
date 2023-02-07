@@ -349,6 +349,7 @@ class SubAreaList(generics.ListCreateAPIView):
             return response
         elif (pdf_download != None):
             df = self.get_df()
+            df = df.fillna('')
             header = {
                 'Zone No' : 'Zone No',
                 'Zone Name' : 'Zone Name',

@@ -149,6 +149,9 @@ class ValidateImportEntity(APIView):
                 emirate_id                          = data['Emirate Id']
                 foodwatch_business_id               = data['FoodWatch Business Id'],
                 foodwatch_id                        = data['FoodWatch Id'],
+                grease_traps                        = data['Grease Traps'],
+                frequency                           = data['Frequency'],
+                last_cleaning_date                  = data['Last Cleaning Date'],
                 data['establishment_name_status']   = ""
                 data['email_status']                = ""
                 data['designation_status']          = ""
@@ -156,6 +159,10 @@ class ValidateImportEntity(APIView):
                 data['sub_category_status']         = ""
                 data['foodwatch_business_id_status']= ""
                 data['foodwatch_id_status']         = ""
+                data['qty_status']                  = ""
+                data['trap_type_status']            = ""
+                data['frequency_status']            = ""
+                data['last_cleaning_date_status']   = ""
                 data['is_verified']                 = True
                 if establishment_name is None:
                     data['establishment_name_status'] = "Establishment name is required"
@@ -185,6 +192,43 @@ class ValidateImportEntity(APIView):
                 if sub_category is None:
                     data['sub_category_status'] = "Sub category not found"
                     data['is_verified']               = False
+                if grease_traps is not None:
+                    grease_traps_array = grease_traps[0].split(',')
+                    for grease_trap in grease_traps_array:
+                        trap_type   = grease_trap.split('(')[0]
+                        qty         = grease_trap[grease_trap.find("(")+1:grease_trap.find(")")]
+                        grease_trap = GreaseTrap.objects.filter(description=trap_type).first()
+                        if grease_trap is None:
+                            data['trap_type_status']            = "Grease trap not found"
+                            data['is_verified']                 = False
+                        if qty is None:
+                            data['qty_status']                  = "Qty is required"
+                            data['is_verified']                 = False
+                        else:
+                            try:
+                                qty = int(qty[0])
+                            except ValueError:
+                                data['qty_status']                  = "Qty should be a number"
+                                data['is_verified']                 = False
+                    if frequency is None:
+                        data['frequency_status']            = "Frequency is required"
+                        data['is_verified']                 = False
+                    else:
+                        try:
+                            frequency = int(frequency[0])
+                        except ValueError:
+                            data['frequency_status']            = "Frequency should be a number"
+                            data['is_verified']                 = False
+                    if last_cleaning_date is None:
+                        data['last_cleaning_date_status']   = "Last cleaning date is required"
+                        data['is_verified']                 = False
+                    else:
+                        try:
+                            last_cleaning_date                  = datetime.datetime.strptime(last_cleaning_date[0], "%m-%d-%Y").date()
+                        except Exception as e:
+                            data['last_cleaning_date_status']   = "Invalid date"
+                            data['is_verified']                 = False
+
                 if data['is_verified'] == False:
                     exist_count = exist_count + 1
                 response_data.append(data)
@@ -216,6 +260,9 @@ class ImportEntity(APIView):
                     sub_category_name           = data['Sub Category']
                     foodwatch_business_id       = data['FoodWatch Business Id'],
                     foodwatch_id                = data['FoodWatch Id'],
+                    grease_traps                = data['Grease Traps'],
+                    frequency                   = data['Frequency'],
+                    last_cleaning_date          = data['Last Cleaning Date'],
                     designation                 = Designation.objects.filter(designation=contact_person_designation).first()
                     sub_area                    = SubArea.objects.filter(sub_area=sub_area_name).first()
                     sub_category                = SubCategory.objects.filter(sub_category=sub_category_name).first()
@@ -258,6 +305,22 @@ class ImportEntity(APIView):
                     )
                     entity.active_contact_person = active_contact_person
                     entity.save()
+                    if grease_traps is not None:
+                        grease_traps_array = grease_traps[0].split(',')
+                        for grease_trap in grease_traps_array:
+                            trap_type   = grease_trap.split('(')[0]
+                            qty         = grease_trap[grease_trap.find("(")+1:grease_trap.find(")")]
+                            grease_trap = GreaseTrap.objects.filter(description=trap_type).first()
+                            for i in range(int(qty[0])):
+                                entity_grease_trap = EntityGreaseTrap.objects.create(
+                                    entity                  = entity,
+                                    grease_trap             = grease_trap,
+                                    capacity                = grease_trap.capacity,
+                                    label                   = grease_trap.description,
+                                    cleaning_frequency      = int(frequency[0]),
+                                    last_cleaning_date      = datetime.datetime.strptime(last_cleaning_date[0], "%m-%d-%Y").date(),
+                                    created_by              = request.user,
+                                )
                     response_data.append(entity)
             return Response(EntityListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -293,12 +356,30 @@ class ValidateImportEntityGreaseTrap(APIView):
                 if qty is None:
                     data['qty_status'] = "Qty is required"
                     data['is_verified']                 = False
+                else:
+                    try:
+                        qty = int(qty)
+                    except ValueError:
+                        data['qty_status']                  = "Qty should be a number"
+                        data['is_verified']                 = False
                 if frequency is None:
                     data['frequency_status'] = "Frequency is required"
                     data['is_verified']                 = False
+                else:
+                    try:
+                        frequency = int(frequency)
+                    except ValueError:
+                        data['frequency_status']            = "Frequency should be a number"
+                        data['is_verified']                 = False
                 if last_cleaning_date is None:
                     data['last_cleaning_date_status'] = "Last cleaning date is required"
                     data['is_verified']                 = False
+                else:
+                    try:
+                        last_cleaning_date                  = datetime.datetime.strptime(last_cleaning_date, "%m-%d-%Y").date()
+                    except Exception as e:
+                        data['last_cleaning_date_status']   = "Invalid date"
+                        data['is_verified']                 = False
                 if data['is_verified'] == False:
                     exist_count = exist_count + 1
                 response_data.append(data)
@@ -328,7 +409,7 @@ class ImportEntityGreaseTrap(APIView):
                     last_cleaning_date          = data['Last Cleaning Date']
                     entity                      = Entity.objects.filter(establishment_name=entity_name).first()
                     grease_trap                 = GreaseTrap.objects.filter(description=trap_type).first()
-                    last_cleaning_date = datetime.datetime.strptime(last_cleaning_date, "%m-%d-%Y").date()
+                    last_cleaning_date          = datetime.datetime.strptime(last_cleaning_date, "%m-%d-%Y").date()
                     for i in range(qty): 
                         entity_grease_trap = EntityGreaseTrap.objects.create(
                             entity                  = entity,
