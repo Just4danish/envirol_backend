@@ -146,7 +146,7 @@ class ValidateImportEntity(APIView):
                 establishment_name                  = data['Establishment Name']
                 sub_area                            = data['Sub Area']
                 sub_category                        = data['Sub Category']
-                emirate_id                          = data['Emirate Id']
+                emirate_id                          = str(data['Emirate Id'])
                 foodwatch_business_id               = data['FoodWatch Business Id'],
                 foodwatch_id                        = data['FoodWatch Id'],
                 grease_traps                        = data['Grease Traps'],
