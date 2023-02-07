@@ -195,20 +195,23 @@ class ValidateImportEntity(APIView):
                 if grease_traps is not None:
                     grease_traps_array = grease_traps[0].split(',')
                     for grease_trap in grease_traps_array:
-                        trap_type   = grease_trap.split('(')[0]
-                        qty         = grease_trap[grease_trap.find("(")+1:grease_trap.find(")")]
+                        trap_type   = grease_trap.split('[')[0].strip()
+                        qty         = grease_trap[grease_trap.find("[")+1:grease_trap.find("]")]
                         grease_trap = GreaseTrap.objects.filter(description=trap_type).first()
                         if grease_trap is None:
                             data['trap_type_status']            = "Grease trap not found"
                             data['is_verified']                 = False
-                        if qty is None:
-                            data['qty_status']                  = "Qty is required"
+                        if qty is None or qty == "":
+                            data['trap_type_status']            = "Qty is required"
                             data['is_verified']                 = False
                         else:
+                            print(qty)
+                            qty = qty.strip()
+                            print(qty)
                             try:
-                                qty = int(qty[0])
+                                qty = int(qty)
                             except ValueError:
-                                data['qty_status']                  = "Qty should be a number"
+                                data['trap_type_status']            = "Qty should be a number"
                                 data['is_verified']                 = False
                     if frequency is None:
                         data['frequency_status']            = "Frequency is required"
@@ -308,10 +311,10 @@ class ImportEntity(APIView):
                     if grease_traps is not None:
                         grease_traps_array = grease_traps[0].split(',')
                         for grease_trap in grease_traps_array:
-                            trap_type   = grease_trap.split('(')[0]
-                            qty         = grease_trap[grease_trap.find("(")+1:grease_trap.find(")")]
+                            trap_type   = grease_trap.split('[')[0].strip()
+                            qty         = grease_trap[grease_trap.find("[")+1:grease_trap.find("]")].strip()
                             grease_trap = GreaseTrap.objects.filter(description=trap_type).first()
-                            for i in range(int(qty[0])):
+                            for i in range(int(qty)):
                                 entity_grease_trap = EntityGreaseTrap.objects.create(
                                     entity                  = entity,
                                     grease_trap             = grease_trap,
