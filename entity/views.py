@@ -175,7 +175,7 @@ class ValidateImportEntity(APIView):
                 if designation is None:
                     data['designation_status'] = "Designation not found"
                     data['is_verified']               = False
-                if not type(foodwatch_business_id[0]) == int:
+                if foodwatch_business_id[0] is not None and not type(foodwatch_business_id[0]) == int:
                     data['foodwatch_business_id_status'] = "Integer value only"
                     data['is_verified']               = False
                 if not type(foodwatch_id[0]) == int:

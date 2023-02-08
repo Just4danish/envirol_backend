@@ -46,6 +46,10 @@ class Entity(models.Model):
     modified_by = models.ForeignKey(Account, related_name='entity_modified_by', on_delete=models.PROTECT, null=True)
     modified_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10, choices=choices, default='Active')
+    cleaning_status_choices = [('Cleaned' , 'Cleaned') , ('Due' , 'Due') , ('Overdue' , 'Overdue')]
+    cleaning_status = models.CharField(max_length=10, choices=cleaning_status_choices, default='Cleaned')
+    inspection_status_choices = [('Inspected' , 'Inspected') , ('Due' , 'Due') , ('Overdue' , 'Overdue')]
+    inspection_status = models.CharField(max_length=10, choices=inspection_status_choices, default='Inspected')
     modification_pending = models.BooleanField(default=False)
 
     class Meta:
