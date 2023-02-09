@@ -112,16 +112,13 @@ class LogoutView(APIView):
     def post(self, request):
         user    = request.user
         unlink  = unlink_vehicle_from_driver(user)
-        if unlink['status']:
-            LoginDetail.objects.create(
-                    user        =   user,
-                    ip_address  =   "Not Available",
-                    log_type    =   'Logout',
-                    status      =   'Success',
-            )
-            return Response("User logged out successfully", status=status.HTTP_200_OK)
-        else:
-            return Response(unlink['message'], status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        LoginDetail.objects.create(
+                user        =   user,
+                ip_address  =   "Not Available",
+                log_type    =   'Logout',
+                status      =   'Success',
+        )
+        return Response("User logged out successfully", status=status.HTTP_200_OK)
 
 class InviteUserView(APIView):
     # permission_classes = [permissions.IsAdminUser]

@@ -6,5 +6,6 @@ class EntityConfig(AppConfig):
     name = 'entity'
 
     def ready(self):
+        import entity.signals
         from .jobs import scheduler
         scheduler.start()
