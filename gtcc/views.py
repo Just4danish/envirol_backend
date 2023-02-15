@@ -12,7 +12,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from abacimodules.permissions import IsDriver, IsOperator, IsGTCCUser
 import decimal
 import json
-import pytz
+from PIL import Image
+import base64
+from io import BytesIO
+from django.core.files import File as Files
 from django.db import connection
 import pandas as pd
 from django.db.models import Sum, Count
@@ -270,6 +273,35 @@ class ImportGTCC(APIView):
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 
+class ChangeGTCCImage(APIView):
+    
+    def put(self, request, pk):
+        image = request.data.get('image', None)
+        try:
+            gtcc =  GTCC.objects.get(pk=pk)
+        except GTCC.DoesNotExist:
+            raise Http404
+        if image == None:
+            gtcc.image.delete()
+            gtcc.image == None
+            gtcc.save()
+            return Response("Deleted", status=status.HTTP_200_OK)
+        else:
+            image = image.split(',')[1]
+            image = Image.open(BytesIO(base64.b64decode(image)))
+            # if image.width > 200:
+            #     image = image.resize((200, 200))
+            image = image.convert('RGB')
+            blob = BytesIO()
+            image.save(blob, 'JPEG')
+            image = Files(blob)
+            gtcc.image.delete()
+            gtcc.image.save('name.jpg', image)
+            data = {
+                "image" : gtcc.image.url
+            }
+            return Response(data, status=status.HTTP_200_OK)
+
 class GTCCDropdownList(APIView):
     def get(self, request):
         data = GTCC.objects.all().order_by('establishment_name')
@@ -324,7 +356,10 @@ class VehicleList(APIView):
         serializer = VehiclePostSerializer(data = request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        data = serializer.save(created_by = request.user)
+        vehicle_status = 'Active'
+        if request.user.user_class == 'GTCC':
+            vehicle_status = 'Approval Pending'
+        data = serializer.save(created_by = request.user, status=vehicle_status)
         return Response(VehicleListSerializer(data).data, status=status.HTTP_200_OK)
 
 class VehicleDetails(APIView):
@@ -696,7 +731,6 @@ def service_request_details_for_mobile_creator(service_request_id):
     entity_contact = service_request.entity.active_contact_person
     service_request_serialized = ServiceRequestSerializer(service_request).data
     greaseTraps = ServiceRequestDetail.objects.filter(service_request = service_request)
-    greaseTraps_serialized = ServiceRequestDetailListSerializer(greaseTraps, many=True).data
     service_request_serialized['restaurant'] = EntitySerializer(entity).data
     service_request_serialized['restaurantContact'] = UserLimitedDetailSerializer(entity_contact).data
     service_request_serialized['greaseTraps'] = ServiceRequestDetailListSerializer(greaseTraps, many=True).data

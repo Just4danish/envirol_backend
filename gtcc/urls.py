@@ -4,6 +4,7 @@ from .views import *
 urlpatterns = [
     path('gtcc', GTCCList.as_view()),
     path('gtcc/<int:pk>', GTCCDetails.as_view()),
+    path('change_gtcc_image/<int:pk>', ChangeGTCCImage.as_view()),
     path('gtcc_dropdownlist', GTCCDropdownList.as_view()),
     path('gtcc_and_drivers', GTCCAndDriversList.as_view()),
     path('payment_detail',PaymentList.as_view()),

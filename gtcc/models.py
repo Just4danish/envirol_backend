@@ -1,14 +1,20 @@
 from django.db import models
 from users.models import Account
 from django.core.validators import MaxValueValidator, MinValueValidator
+import time
 
-choices = [('Active', 'Active'), ('Disabled', 'Disabled'), ('Deleted', 'Deleted')]
+choices = [('Active', 'Active'), ('Approval Pending' , 'Approval Pending'), ('Disabled', 'Disabled'), ('Deleted', 'Deleted')]
+
+def content_file_name(instance, filename):
+    path = 'gtcc_image/' + str(instance.id) + '/' + f'{str(instance.id)}_{time.time()}.png'
+    return path
 
 class GTCC(models.Model):
     establishment_name = models.CharField(max_length=255)
     trade_license_no = models.CharField(max_length=100, null=True)
     trade_license_name = models.CharField(max_length=100, null=True)
     env_sap_id = models.CharField(max_length=100,null=True)
+    image = models.ImageField(upload_to=content_file_name, null=True)
     credit_available = models.DecimalField(max_digits=12, decimal_places=1, default=0)
     active_contact_person = models.ForeignKey(Account, related_name='active_contact_person', on_delete=models.CASCADE, null=True)
     foodwatch_id = models.IntegerField(null=True)
@@ -24,7 +30,7 @@ class GTCC(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='gtcc_modified_by', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=10, choices=choices, default='Active')
+    status = models.CharField(max_length=20, choices=choices, default='Active')
 
 class PaymentDetail(models.Model):
     gtcc = models.ForeignKey(GTCC, related_name='payment_detail_gtcc', on_delete=models.CASCADE)
@@ -59,7 +65,7 @@ class CheckoutDetail(models.Model):
     type_of_payment_choices = [('Card', 'Card'), ('Bank', 'Bank')]
     type_of_payment = models.CharField(max_length=10, choices=type_of_payment_choices)
     status_choices = [('Initiated', 'Initiated'), ('Success', 'Success'), ('Failed', 'Failed')]
-    status = models.CharField(max_length=10, choices=status_choices, default='Initiated')
+    status = models.CharField(max_length=20, choices=status_choices, default='Initiated')
 
 class VehicleDetail(models.Model):
     gtcc = models.ForeignKey(GTCC, related_name='vehicle_detail_gtcc', on_delete=models.CASCADE)
@@ -73,7 +79,7 @@ class VehicleDetail(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='vehicle_detail_modified_by', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=10, choices=choices, default='Active')
+    status = models.CharField(max_length=20, choices=choices, default='Active')
     # entry_choices = [('Entered','Entered'),('Exited','Exited')]
     # envirol_entry_status = models.CharField(max_length=10, choices=entry_choices, default='Exited')
 
@@ -85,7 +91,7 @@ class Booklet(models.Model):
     modified_by = models.ForeignKey(Account, related_name='booklet_modifier', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(null=True)
     status_choices = [('Active', 'Active'), ('Issued', 'Issued'), ('Disabled', 'Disabled'), ('Deleted', 'Deleted')]
-    status = models.CharField(max_length=10, choices=status_choices, default='Active')
+    status = models.CharField(max_length=20, choices=status_choices, default='Active')
 
 class CouponBooklet(models.Model):
     booklet = models.OneToOneField(Booklet, on_delete=models.CASCADE)
@@ -101,7 +107,7 @@ class CouponBooklet(models.Model):
     modified_by = models.ForeignKey(Account, related_name='booklet_modified_by', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(null=True)
     booklet_choices = [('Issued', 'Issued'), ('In Use', 'In Use'), ('Used', 'Used')]
-    status = models.CharField(max_length=10, choices=booklet_choices, default='Issued')
+    status = models.CharField(max_length=20, choices=booklet_choices, default='Issued')
 
 def content_file_name(instance, filename):
     path = f"coupons/{instance.booklet.id}/{instance.coupon_no}_{filename[-5:]}"
@@ -124,7 +130,7 @@ class Coupon(models.Model):
     vehicle = models.ForeignKey(VehicleDetail, related_name='coupon_vehicledetail', on_delete=models.CASCADE, null=True)
     dumping_vehicledetails = models.ForeignKey('VehicleEntryDetails', related_name='coupon_dumped_vehicledetails', on_delete=models.CASCADE, null=True)
     coupon_choices = [('Issued', 'Issued'), ('Used', 'Used'), ('Converted', 'Converted'), ('Lost', 'Lost')]
-    status = models.CharField(max_length=10, choices=coupon_choices, default='Issued')
+    status = models.CharField(max_length=20, choices=coupon_choices, default='Issued')
 
 class AccessControlLog(models.Model):
     vehicle = models.ForeignKey(VehicleDetail, related_name='accesscontrollog_vehicledetail', on_delete=models.CASCADE)
@@ -133,7 +139,7 @@ class AccessControlLog(models.Model):
     rfid_card = models.ForeignKey('masters.RFIDCard', related_name='accesscontrollog_rfid', on_delete=models.CASCADE, null=True)
     accessed_gate = models.ForeignKey('masters.Gate', related_name='gate_vehicledetail', on_delete=models.CASCADE)
     status_choice = [("Entered","Entered"),("Approved","Approved"),("Rejected","Rejected"),("Discharged","Discharged"),("Exited","Exited")]
-    status = models.CharField(max_length=10, choices=status_choice,null=True)
+    status = models.CharField(max_length=20, choices=status_choice,null=True)
     accessed_time = models.DateTimeField(auto_now_add=True)
     direction_choice = [("Entry","Entry"),("Exit","Exit")]
     accessed_direction = models.CharField(max_length=10, choices=direction_choice,null=True)
