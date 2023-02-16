@@ -1017,7 +1017,7 @@ class AddDeleteCouponView(APIView):
             response = {'response':"Invalid Coupon", 'status':'error'}
             return Response(response, status=status.HTTP_403_FORBIDDEN)
         coupon = coupon[0]
-        if(coupon.status == 'Converted' or coupon.status == 'Used'):
+        if(coupon.status == 'Converted' or coupon.status == 'Used' or coupon.status == 'Lost'):
             response = {'response':"This coupon has already been used!", 'status':'error'}
             return Response(response, status=status.HTTP_403_FORBIDDEN)
         try:
@@ -1036,7 +1036,7 @@ class AddDeleteCouponView(APIView):
             coupon.image.save(coupon_image.name,coupon_image,save=False)
             coupon.vehicle = vehicle_entry_details.vehicle
             coupon.dumping_vehicledetails = vehicle_entry_details
-            coupon.status = 'Used'
+            coupon.status = 'Scanned'
             coupon.save()
             vehicle_entry_details.total_gallon_collected += int(data['total_gallons'])
             vehicle_entry_details.save()
@@ -1311,31 +1311,38 @@ class OperatorDumpingAcceptanceView(APIView):
             vehicle_entry_details = VehicleEntryDetails.objects.get(id = data['vehicle_entry_details_id'])
         except:
             return Response({'error' : 'Vehicle not found'}, status=status.HTTP_400_BAD_REQUEST)
-        if (data['operator_acceptance'] == 'Accepted'):
+        operator_acceptance = data['operator_acceptance']
+        # if (data['operator_acceptance'] == 'Accepted'):
+        gtcc                    = vehicle_entry_details.gtcc
+        if operator_acceptance == 'Accepted':
             unit_price_model, _     = Unitprice.objects.get_or_create()
             unit_price              = unit_price_model.unit_price
             vat                     = 0.05
             total_fee_for_dumping   = float(vehicle_entry_details.total_gallon_collected) * float(unit_price) * float(1+vat)
-            gtcc                    = vehicle_entry_details.gtcc
-
             if (total_fee_for_dumping > float(gtcc.credit_available)):
                 return Response({'error' : 'Insufficient balance !'}, status=status.HTTP_400_BAD_REQUEST)
-
             vehicle_entry_details.total_gallon_dumped   = vehicle_entry_details.total_gallon_collected
             vehicle_entry_details.total_dumping_fee     = total_fee_for_dumping
             new_balance                                 = float(gtcc.credit_available) - float(total_fee_for_dumping)
             gtcc.credit_available                       = new_balance
             gtcc.save()
-
-            # Now we need to update all the SRs as dumber
-            srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
-            for sr in srs:
-                driver = sr.driver
-
+        coupons = Coupon.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id, status='Scanned')
+        coupon_ids_array = []
+        for coupon in coupons:
+            coupon_ids_array.append(coupon.id)
+            if operator_acceptance == 'Accepted':
+                coupon.status = 'Used'
+                coupon.save()
+        # Now we need to update all the SRs as dumber
+        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
+        sr_ids_array = []
+        for sr in srs:
+            sr_ids_array.append(sr.id)
+            if operator_acceptance == 'Accepted':
+                driver              = sr.driver
                 sr.status           = 'Discharged'
                 sr.discharge_time   = timezone.now()
                 sr.save()
-
                 ServiceRequestLog.objects.create(
                     service_request     = sr,
                     vehicle             = sr.vehicle,
@@ -1344,9 +1351,14 @@ class OperatorDumpingAcceptanceView(APIView):
                     log                 = f"This job has been discharged by Mr.{request.user.full_name}",
                     created_by          = request.user
                 )
+        job_log = {
+            "coupons"   : coupon_ids_array,
+            "srs"       : sr_ids_array
+        }
         vehicle_entry_details.operator              = request.user   
         vehicle_entry_details.operator_acceptance   = data['operator_acceptance']
         vehicle_entry_details.exit_time             = timezone.now()
+        vehicle_entry_details.job_log               = json.dumps(job_log)
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
         vehicle_entry_details.save()

@@ -129,7 +129,7 @@ class Coupon(models.Model):
     image = models.ImageField(upload_to=content_file_name, null=True)
     vehicle = models.ForeignKey(VehicleDetail, related_name='coupon_vehicledetail', on_delete=models.CASCADE, null=True)
     dumping_vehicledetails = models.ForeignKey('VehicleEntryDetails', related_name='coupon_dumped_vehicledetails', on_delete=models.CASCADE, null=True)
-    coupon_choices = [('Issued', 'Issued'), ('Used', 'Used'), ('Converted', 'Converted'), ('Lost', 'Lost')]
+    coupon_choices = [('Issued', 'Issued'), ('Scanned', 'Scanned'), ('Used', 'Used'), ('Converted', 'Converted'), ('Lost', 'Lost')]
     status = models.CharField(max_length=20, choices=coupon_choices, default='Issued')
 
 class AccessControlLog(models.Model):
@@ -158,6 +158,7 @@ class VehicleEntryDetails(models.Model):
     operator_acceptance_choice = [("Pending","Pending"),("Accepted","Accepted"),("Rejected","Rejected")]
     operator_acceptance = models.CharField(max_length=10, choices=operator_acceptance_choice, default='Pending')
     remarks = models.TextField(null=True)
+    job_log = models.JSONField(null=True)
     current_status_choice = [("Entered","Entered"),("Exited","Exited")]
     current_status = models.CharField(max_length=10, choices=current_status_choice)
 
