@@ -252,8 +252,8 @@ class ImportGTCC(APIView):
                     active_contact_person = Account.objects.create(
                         email               =   invitee_email,
                         username            =   invitee_email,
-                        first_name          =   first_name_temp,
-                        last_name           =   last_name_temp,
+                        first_name          =   str(first_name_temp),
+                        last_name           =   str(last_name_temp),
                         contact_number      =   data['Contact Number'],
                         emirate             =   data['Emirate Id'],
                         designation         =   designation,
