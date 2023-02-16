@@ -425,7 +425,7 @@ class VehicleQRCodeScan(APIView):
         data = request.data
         random_key = data['random_key']
         driver = request.user
-        vehicle = VehicleDetail.objects.filter(random_key=random_key).exclude(status='Deleted').first()
+        vehicle = VehicleDetail.objects.filter(random_key=random_key, status = 'Active').first()
         if not vehicle:
             return Response("Invalid QR Code !", status=status.HTTP_404_NOT_FOUND)
         if(driver.link_id != vehicle.gtcc.id):
@@ -526,7 +526,7 @@ class VehicleQRCodeCheck(APIView):
         serializer = VehicleQRCodeScanSerializer(data=request.data)
         if serializer.is_valid():
             random_key = serializer.data['random_key']
-            vehicle = VehicleDetail.objects.filter(random_key=random_key).exclude(status='Deleted').first()
+            vehicle = VehicleDetail.objects.filter(random_key=random_key, status = 'Active').first()
             if not vehicle:
                 return Response("Vehicle not found", status=status.HTTP_200_OK)
             if vehicle.driver != request.user:
@@ -552,7 +552,7 @@ class GTCCVehicleList(APIView):
             gtcc = GTCC.objects.get(pk=gtcc_id)
         except GTCC.DoesNotExist:
             raise Http404
-        data = VehicleDetail.objects.filter(gtcc = gtcc)
+        data = VehicleDetail.objects.filter(gtcc = gtcc, status='Active')
         return Response(VehicleLimitedListSerializer(data, many=True).data, status=status.HTTP_200_OK)
 
 class DriverServiceRequestCount(APIView):
@@ -1169,7 +1169,7 @@ class VehicleQRCodeScanForOperator(APIView):
     def post(self, request):
         random_key = request.data['random_key']
         try:
-            vehicle = VehicleDetail.objects.get(random_key=random_key)
+            vehicle = VehicleDetail.objects.get(random_key=random_key, status = 'Active')
             serialized_data = VehicleListSerializer(vehicle).data
             return Response(serialized_data, status=status.HTTP_200_OK)
         except:
@@ -1445,7 +1445,10 @@ class VehicleStatus(APIView):
         driver_assosiated   = vehicles.filter(status='Active', driver__isnull=False).count()
         cleaning_data       = ServiceRequest.objects.filter(entity_gtcc__gtcc_id=gtcc, status='Processing').annotate(cleaning_count=Count('vehicle', distinct=True)).values('cleaning_count')
         discharging         = VehicleEntryDetails.objects.filter(gtcc_id=gtcc, current_status='Entered').count()
-        cleaning    = cleaning_data[0]['cleaning_count']
+        if cleaning_data:
+            cleaning    = cleaning_data[0]['cleaning_count']
+        else:
+            cleaning    = 0
         moving      = driver_assosiated - cleaning - discharging
         data = {
                     'active'        : active,

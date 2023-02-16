@@ -286,6 +286,7 @@ class ImportEntity(APIView):
                         subarea                 = sub_area,
                         category                = sub_category.main_category,
                         sub_category            = sub_category,
+                        random_key              = get_random_string(64).lower(),
                         created_by              = request.user,
                     )
                     active_contact_person = Account.objects.create(

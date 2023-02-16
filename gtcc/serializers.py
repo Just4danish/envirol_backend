@@ -304,7 +304,7 @@ class VehicleQRCodeScanSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         random_key = validated_data.get('random_key')
         driver = validated_data.get('driver')
-        vehicle = VehicleDetail.objects.filter(random_key=random_key).exclude(status='Deleted').first()
+        vehicle = VehicleDetail.objects.filter(random_key=random_key, status='Active').first()
         if not vehicle:
             raise serializers.ValidationError("Invalid QR Code !")
         # breakpoint()

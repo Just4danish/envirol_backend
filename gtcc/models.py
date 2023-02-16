@@ -3,7 +3,7 @@ from users.models import Account
 from django.core.validators import MaxValueValidator, MinValueValidator
 import time
 
-choices = [('Active', 'Active'), ('Approval Pending' , 'Approval Pending'), ('Disabled', 'Disabled'), ('Deleted', 'Deleted')]
+choices = [('Active', 'Active'), ('Approval Pending' , 'Approval Pending'), ('Disabled', 'Disabled'), ('Deleted', 'Deleted'), ('Rejected', 'Rejected')]
 
 def content_file_name(instance, filename):
     path = 'gtcc_image/' + str(instance.id) + '/' + f'{str(instance.id)}_{time.time()}.png'

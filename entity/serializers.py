@@ -212,7 +212,7 @@ class EntityLimitedListSerializer(serializers.ModelSerializer):
     active_gtcc_detail = EntityGTCCLimitedListSerializer()
     class Meta:
         model = Entity
-        fields = ['id', 'establishment_name', 'address', 'subarea', 'sub_category', 'status', 'active_gtcc_detail']
+        fields = ['id', 'establishment_name', 'address', 'subarea', 'sub_category', 'status', 'random_key', 'active_gtcc_detail']
 
 class EntityWithGreaseTrapsSerializer(serializers.ModelSerializer):
     entity_grease_trap_entity = EntityGreaseTrapListSerializer(many=True)

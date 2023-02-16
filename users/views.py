@@ -78,7 +78,7 @@ class LoginView(APIView):
                 auth_token = jwt.encode(message, settings.JWT_SECRET_KEY, algorithm="HS256")
                 serialized_data = AccountSerializer(user).data
                 if (user.user_type == 'Driver'):
-                    vehicle = VehicleDetail.objects.filter(driver=user).exclude(status='Deleted').first()
+                    vehicle = VehicleDetail.objects.filter(driver=user, status = 'Active').first()
                     gtcc = GTCC.objects.get(id = user.link_id)
                     serialized_data['gtcc'] = GTCCModelSerializer(gtcc).data
                     if not vehicle:
@@ -360,7 +360,7 @@ class ProfileView(APIView):
         userobject = request.user
         serialized_data = AccountSerializer(userobject).data
         if (userobject.user_type == 'Driver'):
-            vehicle = VehicleDetail.objects.filter(driver=userobject).exclude(status='Deleted').first()
+            vehicle = VehicleDetail.objects.filter(driver=userobject, status = 'Active').first()
             gtcc = GTCC.objects.get(id = userobject.link_id)
             serialized_data['gtcc'] = GTCCModelSerializer(gtcc).data
             if not vehicle:
