@@ -167,7 +167,7 @@ class ValidateImportEntity(APIView):
                 if establishment_name is None:
                     data['establishment_name_status'] = "Establishment name is required"
                     data['is_verified']               = False
-                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
+                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email.lower()})
                 if not email_serializer.is_valid():
                     data['email_status'] = "Email already exist/ Invalid email"
                     data['is_verified']               = False
@@ -205,9 +205,7 @@ class ValidateImportEntity(APIView):
                             data['trap_type_status']            = "Qty is required"
                             data['is_verified']                 = False
                         else:
-                            print(qty)
                             qty = qty.strip()
-                            print(qty)
                             try:
                                 qty = int(qty)
                             except ValueError:

@@ -190,7 +190,7 @@ class ValidateImportGTCC(APIView):
                 if trade_license_no is None:
                     data['trade_license_no_status'] = "Trade license no is required"
                     data['is_verified']                 = False
-                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email})
+                email_serializer = AccountEmailSerializer(data = {"email" :invitee_email.lower()})
                 if not email_serializer.is_valid():
                     data['email_status'] = "Email already exist/ Invalid email"
                     data['is_verified']                 = False
