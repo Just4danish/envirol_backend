@@ -252,10 +252,11 @@ class ImportEntity(APIView):
     @transaction.atomic
     def post(self, request):
         datas           = request.data
-        response_data   = []
         try:
+            success_count          = 0
+            total_count            = len(datas['received_file'])
             for data in datas['received_file']:
-                is_verified                     = data['is_verified']
+                is_verified            = data['is_verified']
                 if is_verified:
                     invitee_email                   = data['Contact Person Email Id']
                     first_name_temp, last_name_temp = name_maker(str(data['Contact Person']))
@@ -332,8 +333,8 @@ class ImportEntity(APIView):
                                     last_cleaning_date      = datetime.datetime.strptime(last_cleaning_date[0], "%m-%d-%Y").date(),
                                     created_by              = request.user,
                                 )
-                    response_data.append(entity)
-            return Response(EntityListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
+                    success_count += 1
+            return Response(f"{success_count} out of {total_count} entities imported successfully", status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -407,8 +408,9 @@ class ImportEntityGreaseTrap(APIView):
 
     @transaction.atomic
     def post(self, request):
-        datas           = request.data
-        response_data   = []
+        datas                  = request.data
+        success_count          = 0
+        total_count            = len(datas['received_file'])
         try:
             for data in datas['received_file']:
                 is_verified                 = data['is_verified']
@@ -431,8 +433,8 @@ class ImportEntityGreaseTrap(APIView):
                             last_cleaning_date      = last_cleaning_date,
                             created_by              = request.user,
                         )
-                        response_data.append(entity_grease_trap)
-            return Response(EntityGreaseTrapListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
+                        success_count += 1
+            return Response(f"{success_count} out of {total_count} grease traps imported successfully", status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 

@@ -229,7 +229,8 @@ class ImportGTCC(APIView):
     @transaction.atomic
     def post(self, request):
         datas           = request.data
-        response_data   = []
+        success_count          = 0
+        total_count            = len(datas['received_file'])
         try:
             for data in datas['received_file']:
                 is_verified         = data['is_verified']
@@ -276,9 +277,9 @@ class ImportGTCC(APIView):
                     )
                     gtcc.active_contact_person = active_contact_person
                     gtcc.save()
-                    response_data.append(gtcc)
+                    success_count += 1
                     
-            return Response(GTCCListSerializer(response_data, many=True).data, status=status.HTTP_201_CREATED)
+            return Response(f"{success_count} out of {total_count} GTCC imported successfully", status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': e.args[0]},status=status.HTTP_406_NOT_ACCEPTABLE)
 
