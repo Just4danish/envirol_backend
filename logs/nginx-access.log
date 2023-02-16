@@ -11062,3 +11062,7 @@
 36.156.28.130 - - [16/Feb/2023:11:59:15 +0400] "GET /robots.txt HTTP/1.1" 502 568 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4 240.111 Safari/537.36"
 36.156.28.130 - - [16/Feb/2023:11:59:26 +0400] "GET /.well-known/security.txt HTTP/1.1" 502 568 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4 240.111 Safari/537.36"
 66.240.205.34 - - [16/Feb/2023:12:10:38 +0400] "H\x00\x00\x00tj\xA8\x9E#D\x98+\xCA\xF0\xA7\xBBl\xC5\x19\xD7\x8D\xB6\x18\xEDJ\x1En\xC1\xF9xu[l\xF0E\x1D-j\xEC\xD4xL\xC9r\xC9\x15\x10u\xE0%\x86Rtg\x05fv\x86]%\xCC\x80\x0C\xE8\xCF\xAE\x00\xB5\xC0f\xC8\x8DD\xC5\x09\xF4" 400 166 "-" "-"
+192.241.239.13 - - [16/Feb/2023:13:06:53 +0400] "GET /autodiscover/autodiscover.json?@zdi/Powershell HTTP/1.1" 502 166 "-" "Mozilla/5.0 zgrab/0.x"
+35.231.124.82 - - [16/Feb/2023:13:07:31 +0400] "OPTIONS / HTTP/1.0" 502 166 "-" "-"
+20.14.93.102 - - [16/Feb/2023:13:12:35 +0400] "GET /.env HTTP/1.1" 502 166 "-" "Mozilla/5.0 (Linux; U; Android 4.4.2; en-US; HM NOTE 1W Build/KOT49H) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 UCBrowser/11.0.5.850 U3/0.8.0 Mobile Safari/534.30"
+20.14.93.102 - - [16/Feb/2023:13:12:36 +0400] "POST / HTTP/1.1" 502 166 "-" "Mozilla/5.0 (Linux; U; Android 4.4.2; en-US; HM NOTE 1W Build/KOT49H) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 UCBrowser/11.0.5.850 U3/0.8.0 Mobile Safari/534.30"
