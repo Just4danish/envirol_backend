@@ -41,7 +41,7 @@ def get_client_ip(request):
     return ip
 
 def name_maker(contact_person_temp):
-    splitted_name = str(contact_person_temp).split(' ')    
+    splitted_name = contact_person_temp.split(' ')    
     if(len(splitted_name)>=2):
         firstNameTemp = splitted_name[0]
         del splitted_name[0]

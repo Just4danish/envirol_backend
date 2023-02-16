@@ -181,6 +181,11 @@ class ValidateImportEntity(APIView):
                 if not type(foodwatch_id[0]) == int:
                     data['foodwatch_id_status'] = "Integer value only"
                     data['is_verified']               = False
+                else:
+                    entity_foodwatch_id = Entity.objects.filter(foodwatch_id=foodwatch_id[0]).first()
+                    if entity_foodwatch_id is not None:
+                        data['foodwatch_id_status'] = "Foodwatch id already exist"
+                        data['is_verified']         = False
                 if len(emirate_id) > 15:
                     data['emirate_id_status'] = "Invalid emirate id"
                     data['is_verified']               = False
@@ -253,7 +258,11 @@ class ImportEntity(APIView):
                 is_verified                     = data['is_verified']
                 if is_verified:
                     invitee_email                   = data['Contact Person Email Id']
-                    first_name_temp, last_name_temp = name_maker(data['Contact Person'])
+                    first_name_temp, last_name_temp = name_maker(str(data['Contact Person']))
+                    if first_name_temp is not None:
+                        first_name_temp = str(first_name_temp)
+                    if last_name_temp is not None:
+                        last_name_temp = str(last_name_temp)
                     emirate_id                  = data['Emirate Id']
                     establishment_name          = data['Establishment Name']
                     contact_person_designation  = data['Designation']
@@ -292,8 +301,8 @@ class ImportEntity(APIView):
                     active_contact_person = Account.objects.create(
                         email               =   invitee_email,
                         username            =   invitee_email,
-                        first_name          =   str(first_name_temp),
-                        last_name           =   str(last_name_temp),
+                        first_name          =   first_name_temp,
+                        last_name           =   last_name_temp,
                         contact_number      =   data['Contact Number'],
                         emirate             =   emirate_id,
                         designation         =   designation,
