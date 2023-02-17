@@ -35,7 +35,7 @@ class GTCCList(generics.ListCreateAPIView):
                         ]
 
     def get_queryset(self):
-        records = GTCC.objects.exclude(status="Deleted")
+        records = GTCC.objects.exclude(status="Deleted").order_by('id')
         return records
 
     def get_df(self):
@@ -201,7 +201,7 @@ class ValidateImportGTCC(APIView):
                 if not type(foodwatch_business_id[0]) == int:
                     data['foodwatch_business_id_status'] = "Integer value only"
                     data['is_verified']               = False
-                if not type(foodwatch_id[0]) == int:
+                if foodwatch_id[0] is not None and not type(foodwatch_id[0]) == int:
                     data['foodwatch_id_status'] = "Integer value only"
                     data['is_verified']               = False
                 else:

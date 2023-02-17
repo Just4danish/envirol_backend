@@ -29,7 +29,7 @@ class EntityList(generics.ListCreateAPIView):
                         'active_contact_person__email',
                         'status',
                         ]
-    queryset = Entity.objects.exclude(status="Deleted")
+    queryset = Entity.objects.exclude(status="Deleted").order_by('id')
     serializer_class = EntityListSerializer
 
     def get_df(self):
@@ -178,7 +178,7 @@ class ValidateImportEntity(APIView):
                 if foodwatch_business_id[0] is not None and not type(foodwatch_business_id[0]) == int:
                     data['foodwatch_business_id_status'] = "Integer value only"
                     data['is_verified']               = False
-                if not type(foodwatch_id[0]) == int:
+                if foodwatch_id[0] is not None and not type(foodwatch_id[0]) == int:
                     data['foodwatch_id_status'] = "Integer value only"
                     data['is_verified']               = False
                 else:
