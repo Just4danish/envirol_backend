@@ -1765,16 +1765,16 @@ def initiate_foodwatch_subcategories():
     for index, row in df.iterrows():
         try:
             main_category, created = MainCategory.objects.get_or_create(
-                main_category = row['Category'],
+                main_category = row['Category'].strip(),
                 created_by_id = 1,
             )
             SubCategory.objects.create(
                 main_category       = main_category,
-                sub_category        = row['Sub Category'],
+                sub_category        = row['Sub Category'].strip(),
                 foodwatch_id        = row['Foodwatch Id'],
-                foodwatch_name      = row['Foodwatch Name'],
+                foodwatch_name      = row['Foodwatch Name'].strip(),
                 foodwatch_sub_id    = row['Foodwatch Sub Id'],
-                foodwatch_sub_name  = row['Foodwatch Sub Name'],
+                foodwatch_sub_name  = row['Foodwatch Sub Name'].strip(),
                 created_by_id       = 1,
             )
         except:
@@ -1788,22 +1788,22 @@ def initiate_foodwatch_subareas():
     for index, row in df.iterrows():
         try:
             zone, zone_created = Zone.objects.get_or_create(
-                zone_no         = row['Zone'],
-                zone_name       = row['Zone'],
+                zone_no         = row['Zone'].strip(),
+                zone_name       = row['Zone'].strip(),
                 created_by_id   = 1,
             )
             area, area_created = Area.objects.get_or_create(
                 zone            = zone, 
-                area_code       = row['Area'],
-                area            = row['Area'],
+                area_code       = row['Area'].strip(),
+                area            = row['Area'].strip(),
                 created_by_id   = 1,
             )
             SubArea.objects.get_or_create(
                 zone            = zone,
                 area            = area,
-                sub_area        = row['Sub Area'],
+                sub_area        = row['Sub Area'].strip(),
                 foodwatch_id    = row['Foodwatch Id'],
-                foodwatch_name  = row['Foodwatch Name'],
+                foodwatch_name  = row['Foodwatch Name'].strip(),
                 created_by_id   = 1,
             )
         except:
