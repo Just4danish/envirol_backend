@@ -6,7 +6,7 @@ from .abaci_dicts import search_in_details
 from masters.models import SubArea, Area, Zone, MainCategory, SubCategory, GreaseTrap
 from entity.models import EntityGTCC
 from django.conf import settings
-from datetime import datetime
+import datetime
 import os
 
 def get_client_ip(request):
