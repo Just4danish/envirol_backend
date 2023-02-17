@@ -451,7 +451,7 @@ class VehicleQRCodeScan(APIView):
             driver.save()
             vehicle.driver = driver
             vehicle.save()
-            service_requests = ServiceRequest.objects.filter(vehicle=vehicle, status='Assigned')
+            service_requests = ServiceRequest.objects.filter(vehicle=vehicle, status='Assigned').select_related('driver')
             if len(service_requests) != 0:
                 for service_request in service_requests:
                     service_request_driver = service_request.driver
