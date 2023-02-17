@@ -4,7 +4,9 @@ from rest_framework import status
 from django.db import connection
 from .abaci_dicts import search_in_details
 from masters.models import SubArea, Area, Zone, MainCategory, SubCategory, GreaseTrap
+from entity.models import EntityGTCC
 from django.conf import settings
+from datetime import datetime
 import os
 
 def get_client_ip(request):
@@ -1809,5 +1811,22 @@ def initiate_foodwatch_subareas():
         except:
             pass
     print("sub areas uploaded successfully")
+
+def entity_gtcc(entity, gtcc):
+        check_active_gtcc = EntityGTCC.objects.filter(entity=entity).exclude(status='Rejected').exclude(status='Expired').first()
+        if check_active_gtcc:
+            if check_active_gtcc.status == 'Approval Pending':
+                print("You have one approval pending contract")
+            check_active_gtcc.status = 'Expired'
+            check_active_gtcc.contract_end = datetime.date.today()
+            check_active_gtcc.save()
+        active_gtcc_detail = EntityGTCC.objects.create(
+            entity = entity,
+            gtcc = gtcc,
+            created_by_id = 1
+        )
+        entity.active_gtcc_detail = active_gtcc_detail
+        entity.modified_by_id = 1
+        entity.save()
 
 
