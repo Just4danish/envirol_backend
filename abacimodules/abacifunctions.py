@@ -1813,10 +1813,8 @@ def initiate_foodwatch_subareas():
     print("sub areas uploaded successfully")
 
 def entity_gtcc(entity, gtcc):
-        check_active_gtcc = EntityGTCC.objects.filter(entity=entity).exclude(status='Rejected').exclude(status='Expired').first()
+        check_active_gtcc = EntityGTCC.objects.filter(entity=entity).exclude(status='Rejected').exclude(status='Expired').last()
         if check_active_gtcc:
-            if check_active_gtcc.status == 'Approval Pending':
-                print("You have one approval pending contract")
             check_active_gtcc.status = 'Expired'
             check_active_gtcc.contract_end = datetime.date.today()
             check_active_gtcc.save()

@@ -161,7 +161,7 @@ class EntityGreaseTrapListSerializer(serializers.ModelSerializer):
 class EntityGTCCPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         entity = validated_data.get('entity')
-        check_active_gtcc = EntityGTCC.objects.filter(entity=entity).exclude(status='Rejected').exclude(status='Expired').first()
+        check_active_gtcc = EntityGTCC.objects.filter(entity=entity).exclude(status='Rejected').exclude(status='Expired').last()
         if check_active_gtcc:
             if check_active_gtcc.status == 'Approval Pending':
                 raise serializers.ValidationError("You have one approval pending contract")
