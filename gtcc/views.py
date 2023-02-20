@@ -1314,6 +1314,7 @@ class OperatorDumpingAcceptanceView(APIView):
     @transaction.atomic
     def post(self, request):
         data = request.data
+        total_gallon_dumped = data['total_gallon_dumped']
         try:
             vehicle_entry_details = VehicleEntryDetails.objects.get(id = data['vehicle_entry_details_id'])
         except:
@@ -1328,7 +1329,7 @@ class OperatorDumpingAcceptanceView(APIView):
             total_fee_for_dumping   = float(vehicle_entry_details.total_gallon_collected) * float(unit_price) * float(1+vat)
             if (total_fee_for_dumping > float(gtcc.credit_available)):
                 return Response({'error' : 'Insufficient balance !'}, status=status.HTTP_400_BAD_REQUEST)
-            vehicle_entry_details.total_gallon_dumped   = vehicle_entry_details.total_gallon_collected
+            vehicle_entry_details.total_gallon_dumped   = total_gallon_dumped
             vehicle_entry_details.total_dumping_fee     = total_fee_for_dumping
             new_balance                                 = float(gtcc.credit_available) - float(total_fee_for_dumping)
             gtcc.credit_available                       = new_balance
