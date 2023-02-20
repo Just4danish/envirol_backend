@@ -11392,3 +11392,4 @@
 103.99.3.216 - - [20/Feb/2023:13:48:25 +0400] "GET /HNAP1/ HTTP/1.1" 404 2512 "https://65.108.220.94/" "Mozilla/5.0 (Windows NT 5.1; rv:9.0.1) Gecko/20100101 Firefox/9.0.1"
 185.16.38.115 - - [20/Feb/2023:16:13:40 +0400] "GET /.env HTTP/1.1" 404 2506 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
 185.16.38.115 - - [20/Feb/2023:16:13:40 +0400] "POST / HTTP/1.1" 404 2491 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+64.62.197.163 - - [20/Feb/2023:17:05:33 +0400] "GET / HTTP/1.1" 502 568 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36 Edg/106.0.1370.37"
