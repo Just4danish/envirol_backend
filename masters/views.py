@@ -4,6 +4,7 @@ from .serializers import *
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, filters
+from rest_framework.permissions import AllowAny
 from django.utils import timezone
 import pandas as pd
 
@@ -479,6 +480,30 @@ class GateDetails(APIView):
             serializer.save(modified_by = request.user)
             return Response(GateListSerializer(data).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class GateStatusCheck(APIView):
+
+    def get_object(self, gate_id):
+        try:
+            return Gate.objects.get(gate_id=gate_id)
+        except Gate.DoesNotExist:
+            raise Http404
+        
+    permission_classes = [AllowAny]
+    def get(self, request, gate_id):
+        data = self.get_object(gate_id)
+        return Response(data.gate_status, status=status.HTTP_200_OK)
+
+    def put(self, request, gate_id):
+        data        = self.get_object(gate_id)
+        gate_status = request.data.get('gate_status', None)
+        if gate_status == None:
+            return Response("Gate status is required", status=status.HTTP_400_BAD_REQUEST)
+        if gate_status not in ['Open', 'Closed']:
+            return Response("Invalid gate status", status=status.HTTP_400_BAD_REQUEST)
+        data.gate_status = gate_status
+        data.save()
+        return Response(gate_status, status=status.HTTP_200_OK)
 
 class RFIDCardList(APIView):
 

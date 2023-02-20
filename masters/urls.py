@@ -23,6 +23,7 @@ urlpatterns = [
     path('designation/<int:pk>', DesignationDetails.as_view()),
     path('gate', GateList.as_view()),
     path('gate/<int:pk>', GateDetails.as_view()),
+    path('gate_status_check/<str:gate_id>', GateStatusCheck.as_view()),
     path('rfid_card', RFIDCardList.as_view()),
     path('rfid_card/<int:pk>', RFIDCardDetails.as_view()),
     path('unused_rfid_cards', UnusedRFIDCards.as_view()),

@@ -101,30 +101,42 @@ class EntityPostSerializer(serializers.ModelSerializer):
             user.save()
         else:
             if user.user_status == 'Invited':
-                user.user_status         =   'Deleted'
+                user.first_name          =   first_name
+                user.last_name           =   last_name
+                user.emirate             =   emirate
+                user.username            =   email
+                user.email               =   email
+                user.designation         =   designation
+                user.contact_number      =   contact_number
+                user.inviting_key        =   get_random_string(64).lower()
+                user.invited_date        =   timezone.now()
+                user.invite_expiry_date  =   timezone.now() + datetime.timedelta(3)
+                user.modified_by         =   validated_data.get('modified_by')
+                user.save()
+                user.send_invitation()
             else:
                 user.user_status         =   'Deactivated'
-            user.modified_by         =   validated_data.get('modified_by')
-            user.save()   
-            active_contact_person = Account.objects.create(
-                        inviter             =   validated_data.get('modified_by'),
-                        email               =   email,
-                        username            =   email,
-                        first_name          =   first_name,
-                        last_name           =   last_name,
-                        emirate             =   emirate,
-                        designation         =   designation,
-                        contact_number      =   contact_number,
-                        link_id             =   instance.id,
-                        link_class          =   'Entity',
-                        user_class          =   'Entity',
-                        user_type           =   'User',
-                        inviting_key        =   get_random_string(64).lower(),
-                        invited_date        =   timezone.now(),
-                        invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),)
-            active_contact_person.send_invitation()
-            instance.active_contact_person = active_contact_person
-            instance.save()
+                user.modified_by         =   validated_data.get('modified_by')
+                user.save()   
+                active_contact_person = Account.objects.create(
+                            inviter             =   validated_data.get('modified_by'),
+                            email               =   email,
+                            username            =   email,
+                            first_name          =   first_name,
+                            last_name           =   last_name,
+                            emirate             =   emirate,
+                            designation         =   designation,
+                            contact_number      =   contact_number,
+                            link_id             =   instance.id,
+                            link_class          =   'Entity',
+                            user_class          =   'Entity',
+                            user_type           =   'User',
+                            inviting_key        =   get_random_string(64).lower(),
+                            invited_date        =   timezone.now(),
+                            invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),)
+                active_contact_person.send_invitation()
+                instance.active_contact_person = active_contact_person
+                instance.save()
         return instance
              
     class Meta:

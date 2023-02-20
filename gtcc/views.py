@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, generics, filters
 from entity.models import ServiceRequestDetail, ServiceRequestDetailImage, EntityGTCC
 from entity.serializers import ServiceRequestListSerializer, ServiceRequestDetailListSerializer, EntitySerializer, ServiceRequestSerializer, GTCCContractListSerializer
-from masters.models import Unitprice
+from masters.models import Unitprice, Gate
 from .serializers import *
 from django.http import Http404,HttpResponse
 from django.db import transaction
@@ -1107,9 +1107,16 @@ class RFIDDetectionForVehicle(APIView):
     @transaction.atomic
     def post(self, request):
         rfid = request.data.get('rfid', None)
+        gate = request.data.get('gate', None)
         if rfid == None:
             return Response("RFID is required", status=status.HTTP_404_NOT_FOUND)
+        elif gate == None:
+            return Response("Gate is required", status=status.HTTP_404_NOT_FOUND)
         else:
+            try:
+                Gate.objects.get(gate_id=gate)
+            except Gate.DoesNotExist:
+                return Response("Invalid gate", status=status.HTTP_404_NOT_FOUND) 
             try:
                 rfid_Card = RFIDCard.objects.get(tag_id=rfid)
                 vehicle = rfid_Card.vehicle
@@ -1362,6 +1369,12 @@ class OperatorDumpingAcceptanceView(APIView):
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
         vehicle_entry_details.save()
+        try:
+            gate = Gate.objects.get(pk=2)
+            gate.gate_status = 'Open'
+            gate.save()
+        except Gate.DoesNotExist:
+            pass
         jobs = allJobs_list_of_driver_for_operator(vehicle_entry_details.id)
         vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
         data = {

@@ -248,10 +248,10 @@ def sync_foodwatch_enitity(request):
                             fogwatch_sub_category   = SubCategory.objects.filter(foodwatch_id=entity_class_id, foodwatch_sub_id=sub_category_id).first()
                             fogwatch_sub_area       = SubArea.objects.filter(foodwatch_id=uae_region_id).first()
                             entity                  = Entity.objects.filter(foodwatch_id=foodwatch_id).first()
-                            if entity == None:
+                            if entity is not None:
                                 active_gtcc_detail = None
                                 if gtcc_foodwatch_id != 0:
-                                    gtcc                = GTCC.objects.filter(foodwatch_id=gtcc_foodwatch_id).first()
+                                    gtcc  = GTCC.objects.filter(foodwatch_id=gtcc_foodwatch_id).first()
                                     if gtcc is not None:
                                         active_gtcc_detail  = entity.active_gtcc_detail
                                         if active_gtcc_detail == None:
