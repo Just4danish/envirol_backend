@@ -46,3 +46,11 @@ class FoodwatchEntity(models.Model):
         self.fogwatch_zone       = fogwatch_sub_area.zone
         super().save(*args, **kwargs)
         return self
+
+class APILog(models.Model):
+    url = models.URLField()
+    call_time = models.DateTimeField(auto_now_add=True)
+    response_time = models.DateTimeField(null=True)
+    response = models.JSONField(null=True)
+    status_choices = [('Pending', 'Pending'), ('Success', 'Success'), ('Failed', 'Failed')]
+    status = models.CharField(max_length=10, choices=status_choices, default='Pending')

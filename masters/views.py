@@ -490,7 +490,12 @@ class CheckGateStatus(APIView):
             return Response("Gate id is required", status=status.HTTP_400_BAD_REQUEST)
         try:
             gate = Gate.objects.get(gate_id=gate_id)
-            return Response(gate.gate_status, status=status.HTTP_200_OK)
+            gate_status = gate.gate_status
+            if gate_status == 'Open':
+                status_code = status.HTTP_200_OK
+            else:
+                status_code = status.HTTP_423_LOCKED
+            return Response(gate.gate_status, status=status_code)
         except Gate.DoesNotExist:
             raise Http404
     
@@ -510,7 +515,11 @@ class UpdateGateStatus(APIView):
             gate = Gate.objects.get(gate_id=gate_id)
             gate.gate_status = gate_status
             gate.save()
-            return Response(gate_status, status=status.HTTP_200_OK)
+            if gate_status == 'Open':
+                status_code = status.HTTP_200_OK
+            else:
+                status_code = status.HTTP_423_LOCKED
+            return Response(gate_status, status=status_code)
         except Gate.DoesNotExist:
             raise Http404
 

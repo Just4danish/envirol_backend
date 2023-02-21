@@ -8,7 +8,7 @@ from django.http import Http404
 from django.core.exceptions import ValidationError
 from entity.models import Entity, EntityGTCC, EntityGreaseTrap, ServiceRequest, ServiceRequestDetail, ServiceRequestLog
 from foodwatch.serializers import ServiceRequestPostSerializer, EntityListSerializer, EntityGreaseTrapListSerializer
-from .models import FoodwatchEntity
+from .models import FoodwatchEntity, APILog
 from gtcc.models import GTCC
 from users.models import Account
 from masters.models import SubCategory, SubArea, Designation
@@ -217,6 +217,23 @@ def get_foodwatch_enitity():
 
     response = requests.request("GET", url, headers=headers, data=payload, files=files)
     return response
+
+def submit_service_request(entity_id, equipment_label, source = 'FGW'):
+    url     = f"{settings.FOODWATCH_BASE_URL}/api/v1/greasetrap/submitServiceRequest?EntityId={entity_id}&EquipmentLabel={equipment_label}&Source={source}"
+
+    payload = {}
+    files   = {}
+    token   = get_foodwatch_token()
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    api_log  = APILog.objects.create(url = url)
+    return {
+        "data"      : response,
+        "api_log"   : api_log
+    }
 
 def sync_foodwatch_enitity(request):
     response = get_foodwatch_enitity()

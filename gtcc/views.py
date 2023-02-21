@@ -1113,7 +1113,7 @@ class RFIDDetectionForVehicle(APIView):
         elif gate_id == None:
             return Response("Gate id is required", status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response("Vehicle entered", status=status.HTTP_200_OK)
+            # return Response("Vehicle entered", status=status.HTTP_200_OK)
             try:
                 Gate.objects.get(gate_id=gate_id)
             except Gate.DoesNotExist:
@@ -1121,12 +1121,12 @@ class RFIDDetectionForVehicle(APIView):
             try:
                 rfid_Card = RFIDCard.objects.get(tag_id=rfid)
                 vehicle = rfid_Card.vehicle
-                driver  = vehicle.driver
-                gtcc    = vehicle.gtcc
                 if vehicle == None:
                     return Response("No vehicle tagged with this RFID", status=status.HTTP_404_NOT_FOUND)
                 if vehicle.status != "Active":
                     return Response("Vehicle not found", status=status.HTTP_404_NOT_FOUND)
+                driver  = vehicle.driver
+                gtcc    = vehicle.gtcc
                 if driver == None:
                     return Response("No driver is associated with this vehicle", status=status.HTTP_404_NOT_FOUND)
                 if gtcc.status != "Active":
@@ -1154,9 +1154,11 @@ class RFIDDetectionForVehicle(APIView):
                 for sr_completed in srs_completed:
                     sr_completed.dumping_vehicledetails = vehicle_entry_details
                     sr_completed.save()
-                return Response("Vehicle entered", status=status.HTTP_200_OK)
+                return Response("Vehicle entered", status=status.HTTP_423_LOCKED)
             except RFIDCard.DoesNotExist:
-                return Response("RFID details not found", status=status.HTTP_404_NOT_FOUND)      
+                #return Response("RFID details not found", status=status.HTTP_404_NOT_FOUND)
+                return Response("RFID details not found", status=status.HTTP_200_OK)
+                # this is for temperory need to change it later      
 
 def vehicle_details_for_operator_maker(vehicle_id):
     vehicle = VehicleDetail.objects.get(id = vehicle_id)
