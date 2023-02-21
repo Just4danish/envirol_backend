@@ -1113,6 +1113,7 @@ class RFIDDetectionForVehicle(APIView):
         elif gate_id == None:
             return Response("Gate id is required", status=status.HTTP_404_NOT_FOUND)
         else:
+            return Response("Vehicle entered", status=status.HTTP_200_OK)
             try:
                 Gate.objects.get(gate_id=gate_id)
             except Gate.DoesNotExist:
