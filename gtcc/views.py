@@ -1106,15 +1106,15 @@ class RFIDDetectionForVehicle(APIView):
 
     @transaction.atomic
     def post(self, request):
-        rfid = request.data.get('rfid', None)
-        gate = request.data.get('gate', None)
+        rfid    = request.data.get('rfid', None)
+        gate_id = request.data.get('gate_id', None)
         if rfid == None:
             return Response("RFID is required", status=status.HTTP_404_NOT_FOUND)
-        elif gate == None:
-            return Response("Gate is required", status=status.HTTP_404_NOT_FOUND)
+        elif gate_id == None:
+            return Response("Gate id is required", status=status.HTTP_404_NOT_FOUND)
         else:
             try:
-                Gate.objects.get(gate_id=gate)
+                Gate.objects.get(gate_id=gate_id)
             except Gate.DoesNotExist:
                 return Response("Invalid gate", status=status.HTTP_404_NOT_FOUND) 
             try:
