@@ -216,7 +216,11 @@ def get_foodwatch_enitity():
     }
 
     response = requests.request("GET", url, headers=headers, data=payload, files=files)
-    return response
+    api_log  = APILog.objects.create(url = url)
+    return {
+        "data"      : response,
+        "api_log"   : api_log
+    }
 
 def submit_service_request(entity_id, equipment_label, source = 'FGW'):
     url     = f"{settings.FOODWATCH_BASE_URL}/api/v1/greasetrap/submitServiceRequest?EntityId={entity_id}&EquipmentLabel={equipment_label}&Source={source}"
@@ -235,8 +239,43 @@ def submit_service_request(entity_id, equipment_label, source = 'FGW'):
         "api_log"   : api_log
     }
 
+def tag_equipment(entity_id, equipment_label):
+    url     = f"{settings.FOODWATCH_BASE_URL}/api/v1/greasetrap/tagEquipment?EquipmentLabel={equipment_label}&EntityId={entity_id}"
+
+    payload = {}
+    files   = {}
+    token   = get_foodwatch_token()
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    api_log  = APILog.objects.create(url = url)
+    return {
+        "data"      : response,
+        "api_log"   : api_log
+    }
+
+def save_api_log(api_response):
+    response        = api_response['data']
+    api_log         = api_response['api_log']
+    if response.status_code == 200:
+        json_object = json.loads(response.text)
+        if json_object['ResultCode'] == 200:
+            api_log.status = 'Success'
+        else:
+            api_log.status = 'Failed'
+        api_log.response      = json_object
+    else:
+        api_log.response    = "Failed to connect"
+        api_log.status      = 'Failed'
+    api_log.response_time = timezone.now()
+    api_log.save()
+
 def sync_foodwatch_enitity(request):
-    response = get_foodwatch_enitity()
+    api_response    = get_foodwatch_enitity()
+    save_api_log(api_response)
+    response        = api_response['data']
     if response:
         if response.status_code == 200:
             json_object = json.loads(response.text)
@@ -329,7 +368,9 @@ def sync_foodwatch_enitity(request):
                             sync_count += 1
                     if PageIndex + 2 > pages:
                         break
-                    response = get_foodwatch_enitity()
+                    api_response    = get_foodwatch_enitity()
+                    save_api_log(api_response)
+                    response        = api_response['data']
                     if response:
                         if response.status_code == 200:
                             json_object = json.loads(response.text)

@@ -100,6 +100,7 @@ class EntityGreaseTrap(models.Model):
     cleaning_frequency = models.IntegerField(validators=[MinValueValidator(1)])
     last_cleaning_date = models.DateField()
     next_cleaning_date = models.DateField()
+    foodwatch_grease_trap_id = models.CharField(max_length=100, null=True)
     created_by = models.ForeignKey(Account, related_name='entity_grease_trap_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='entity_grease_trap_modified_by', on_delete=models.CASCADE, null=True)

@@ -749,7 +749,7 @@ class EntityQRCodeScan(APIView):
         #     return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
 
 class ServiceRequestList(APIView):
-    permission_classes = [IsAuthenticated, IsEntityUser]
+    # permission_classes = [IsAuthenticated, IsEntityUser]
 
     def get(self, request):
         data = ServiceRequest.objects.all()
