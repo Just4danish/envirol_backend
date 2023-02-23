@@ -6,8 +6,14 @@ def update_entity_grease_trap_cleaning_status():
     today        = timezone.now().date()
     grease_traps = EntityGreaseTrap.objects.filter((Q(cleaning_status='Cleaned') | Q(cleaning_status='Due')), next_cleaning_date__lte=today).select_related('entity')
     for grease_trap in grease_traps:
+        sr_required = True
         if grease_trap.next_cleaning_date == today:
             grease_trap.cleaning_status = 'Due'
+        else:
+            if grease_trap.cleaning_status == 'Due':
+                sr_required = False
+            grease_trap.cleaning_status = 'Overdue'
+        if sr_required:
             entity              = grease_trap.entity
             active_gtcc_detail  = entity.active_gtcc_detail
             if active_gtcc_detail.status == 'Active':
@@ -27,8 +33,6 @@ def update_entity_grease_trap_cleaning_status():
                     log = "Job initiated from "+entity.establishment_name,
                     created_by_id = 1
                 )
-        else:
-            grease_trap.cleaning_status = 'Overdue'
         grease_trap.save()
             
 
