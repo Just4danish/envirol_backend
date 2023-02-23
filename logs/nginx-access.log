@@ -12178,3 +12178,5 @@
 23.152.225.2 - - [23/Feb/2023:13:59:21 +0400] "GET /robots.txt HTTP/1.1" 502 166 "-" "P9w3Yp0gUtVoblJ"
 23.152.225.2 - - [23/Feb/2023:13:59:22 +0400] "HEAD / HTTP/1.1" 502 0 "-" "oH4vcnFtbzUu6J0"
 23.152.225.2 - - [23/Feb/2023:13:59:24 +0400] "DELETE / HTTP/1.1" 502 166 "-" "pWV1GL2WznHg5kF"
+82.64.228.125 - - [23/Feb/2023:15:02:13 +0400] "GET / HTTP/1.0" 404 13207 "-" "-"
+152.89.196.211 - - [23/Feb/2023:15:13:25 +0400] "GET /?XDEBUG_SESSION_START=phpstorm HTTP/1.1" 404 2526 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"

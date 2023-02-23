@@ -23,10 +23,13 @@ class EntityList(generics.ListCreateAPIView):
     search_fields =     [
                         'establishment_name', 
                         'trade_license_no',
+                        'foodwatch_id',
                         'env_sap_id',
                         'entity_location',
                         'active_contact_person__full_name',
                         'active_contact_person__email',
+                        'inspection_status',
+                        'cleaning_status',
                         'status',
                         ]
     queryset = Entity.objects.exclude(status="Deleted").order_by('id')
@@ -45,10 +48,10 @@ class EntityList(generics.ListCreateAPIView):
                                                                     'active_contact_person_id', 
                                                                     'status', 
                                                                    ))
-        columns_records  = ['Entity ID',
+        columns_records  = ['Entity Id',
                     'License No', 
                     'Entity Name',
-                    'Business ID', 
+                    'Foodwatch Id', 
                     'Location', 
                     'active_contact_person_id', 
                     'Status',]
@@ -61,10 +64,10 @@ class EntityList(generics.ListCreateAPIView):
         df_users.set_axis(columns_users, axis=1, inplace=True)
         df = df_records.merge(df_users, how='inner', left_on='active_contact_person_id', right_on='id')
         df.drop(['active_contact_person_id','id'], inplace=True, axis=1)
-        df.loc[:, ['Entity ID',
+        df.loc[:, ['Entity Id',
                     'License No', 
                     'Entity Name',
-                    'Business ID', 
+                    'Foodwatch Id', 
                     'Location', 
                     'Contact Person', 
                     'Email ID', 
@@ -85,10 +88,10 @@ class EntityList(generics.ListCreateAPIView):
         elif (pdf_download != None):
             df = self.get_df()
             header = {
-                'Entity ID'	    :	'Entity ID',
+                'Entity Id'	    :	'Entity Id',
                 'License No' 	:	'License No', 
-                'Entity Name'	    :	'Entity Name',
-                'Business ID' 	:	'Business ID', 
+                'Entity Name'	:	'Entity Name',
+                'Foodwatch Id' 	:	'Foodwatch Id', 
                 'Location' 	    :	'Location', 
                 'Contact Person':   'Contact Person', 
                 'Email ID' 	    :	'Email ID', 
