@@ -829,7 +829,10 @@ class UpdateServiceRequest(APIView):
                 log = f"This job has been completed by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
                 created_by = driver
             )
-
+            entity_grease_traps = ServiceRequestDetail.objects.filter(service_request=service_request, status='Completed').select_related('grease_trap')
+            for entity_grease_trap in entity_grease_traps:
+                entity_grease_trap.last_cleaning_date = datetime.date.today()
+                entity_grease_trap.save()
             data = allJobs_list_for_driver(service_request.vehicle.id)
             return Response(data, status=status.HTTP_200_OK)
 
