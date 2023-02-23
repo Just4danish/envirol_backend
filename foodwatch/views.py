@@ -259,9 +259,13 @@ def tag_equipment(entity_id, equipment_label):
 def save_api_log(api_response):
     response        = api_response['data']
     api_log         = api_response['api_log']
+    status          = False
+    result          = None
     if response.status_code == 200:
         json_object = json.loads(response.text)
         if json_object['ResultCode'] == 200:
+            status         = True
+            result         = json_object['Result']
             api_log.status = 'Success'
         else:
             api_log.status = 'Failed'
@@ -271,6 +275,10 @@ def save_api_log(api_response):
         api_log.status      = 'Failed'
     api_log.response_time = timezone.now()
     api_log.save()
+    return {
+        "status" : status,
+        "result" : result
+    }
 
 def sync_foodwatch_enitity(request):
     api_response    = get_foodwatch_enitity()
@@ -303,36 +311,36 @@ def sync_foodwatch_enitity(request):
                             gtcc_foodwatch_id       = entity['GTTCFoodwatchId'] if entity['GTTCFoodwatchId'] else 0
                             fogwatch_sub_category   = SubCategory.objects.filter(foodwatch_id=entity_class_id, foodwatch_sub_id=sub_category_id).first()
                             fogwatch_sub_area       = SubArea.objects.filter(foodwatch_id=uae_region_id).first()
-                            entity                  = Entity.objects.filter(foodwatch_id=foodwatch_id).first()
-                            if entity is not None:
+                            entity_obj              = Entity.objects.filter(foodwatch_id=foodwatch_id).first()
+                            if entity_obj is not None:
                                 active_gtcc_detail = None
                                 if gtcc_foodwatch_id != 0:
                                     gtcc  = GTCC.objects.filter(foodwatch_id=gtcc_foodwatch_id).first()
                                     if gtcc is not None:
-                                        active_gtcc_detail  = entity.active_gtcc_detail
+                                        active_gtcc_detail  = entity_obj.active_gtcc_detail
                                         if active_gtcc_detail == None:
-                                            active_gtcc_detail = create_entity_gtcc(entity, gtcc, request.user)
+                                            active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user)
                                         else:
                                             if active_gtcc_detail.gtcc == gtcc:
                                                 if active_gtcc_detail.status == 'Expired':
-                                                    active_gtcc_detail = create_entity_gtcc(entity, gtcc, request.user)
+                                                    active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user)
                                             else:
-                                                check_active_gtcc = EntityGTCC.objects.filter(entity=entity, status='Active').first()
+                                                check_active_gtcc = EntityGTCC.objects.filter(entity=entity_obj, status='Active').first()
                                                 if check_active_gtcc:
                                                     check_active_gtcc.status = 'Expired'
                                                     check_active_gtcc.contract_end = datetime.date.today()
                                                     check_active_gtcc.save()
-                                                active_gtcc_detail = create_entity_gtcc(entity, gtcc, request.user)
+                                                active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user)
                                 status = 'Synced'
-                                entity.trade_license_no     = license_nr
-                                entity.trade_license_name   = name_of_establishment
-                                entity.active_gtcc_detail   = active_gtcc_detail
-                                entity.business_id          = business_id
-                                entity.address              = address
-                                entity.po_box               = po_box
-                                entity.phone_no             = office_line
-                                entity.office_email         = office_email
-                                entity.save()
+                                entity_obj.trade_license_no     = license_nr
+                                entity_obj.trade_license_name   = name_of_establishment
+                                entity_obj.active_gtcc_detail   = active_gtcc_detail
+                                entity_obj.business_id          = business_id
+                                entity_obj.address              = address
+                                entity_obj.po_box               = po_box
+                                entity_obj.phone_no             = office_line
+                                entity_obj.office_email         = office_email
+                                entity_obj.save()
                             else:
                                 status = 'Pending'
                             FoodwatchEntity.objects.create(

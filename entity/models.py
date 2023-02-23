@@ -21,7 +21,7 @@ class Entity(models.Model):
     image = models.ImageField(upload_to=content_file_name, null=True)
     active_contact_person = models.ForeignKey(Account, related_name='entity_active_contact_person', on_delete=models.PROTECT, null=True)
     active_gtcc_detail = models.ForeignKey('EntityGTCC', related_name='entity_active_gtcc', on_delete=models.PROTECT, null=True)
-    foodwatch_id = models.IntegerField(null=True, blank=True)
+    foodwatch_id = models.IntegerField(null=True, blank=True, unique=True)
     foodwatch_business_id = models.IntegerField(null=True, blank=True)
     job_card_no = models.CharField(max_length=100, null=True)
     category = models.ForeignKey(MainCategory, related_name='entity_category', on_delete=models.PROTECT)

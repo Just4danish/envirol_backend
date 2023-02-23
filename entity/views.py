@@ -708,7 +708,11 @@ class EntityQRCodeScan(APIView):
         vehicle             = request.user.assigned_vehicle
         driver              = request.user
         try:
-            entity              = Entity.objects.get(random_key = random_key)
+            if 'http' in random_key:
+                foodwatch_id = random_key.split('EntityId =')[1]
+                entity     = Entity.objects.get(foodwatch_id = foodwatch_id)
+            else:
+                entity     = Entity.objects.get(random_key = random_key)
             service_requests    = ServiceRequest.objects.filter(entity=entity, vehicle=vehicle, status='Assigned')
             if (service_request_id != None):
                 service_requests = service_requests.filter(id = service_request_id)

@@ -41,9 +41,11 @@ class FoodwatchEntity(models.Model):
     def save(self, *args, **kwargs):
         fogwatch_sub_category    = self.fogwatch_sub_category
         fogwatch_sub_area        = self.fogwatch_sub_area
-        self.fogwatch_category   = fogwatch_sub_category.main_category
-        self.fogwatch_area       = fogwatch_sub_area.area
-        self.fogwatch_zone       = fogwatch_sub_area.zone
+        if fogwatch_sub_category:
+            self.fogwatch_category   = fogwatch_sub_category.main_category
+        if fogwatch_sub_area:
+            self.fogwatch_area       = fogwatch_sub_area.area
+            self.fogwatch_zone       = fogwatch_sub_area.zone
         super().save(*args, **kwargs)
         return self
 
