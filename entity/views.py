@@ -703,6 +703,7 @@ class EntityQRCodeScan(APIView):
     @transaction.atomic
     def post(self, request):
         random_key          = request.data.get('random_key')
+        print(random_key)
         service_request_id  = request.data.get('service_request_id', None)
         qr_scan_location    = request.data.get('qr_scan_location', None)
         vehicle             = request.user.assigned_vehicle
