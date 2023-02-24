@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from masters.models import Zone, Area, SubArea
 from entity.models import Entity
+from .models import EntityInspection, EntityGreaseTrapInspection
 
 class ZoneListSerializer(serializers.ModelSerializer):
     area_count = serializers.SerializerMethodField()
@@ -63,3 +64,13 @@ class EntityListSerializerInspector(serializers.ModelSerializer):
     class Meta:
         model = Entity
         fields = ['id', 'establishment_name', 'trade_license_no', 'makhani_no', 'cleaning_status', 'inspection_status']
+
+class EntityInspectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntityInspection
+        fields = '__all__'
+
+class EntityGreaseTrapInspectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntityGreaseTrapInspection
+        fields = '__all__'

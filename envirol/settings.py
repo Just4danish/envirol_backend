@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'entity',
     'gtcc',
     'foodwatch',
+    'inspector',
 ]
 
 MIDDLEWARE = [

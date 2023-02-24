@@ -1123,6 +1123,8 @@ class RFIDDetectionForVehicle(APIView):
                 return Response("Invalid gate", status=status.HTTP_404_NOT_FOUND) 
             try:
                 rfid_Card = RFIDCard.objects.get(tag_id=rfid)
+                if rfid_Card.rfid_class == 'Envirol':
+                    return Response("Envirol vehicle", status=status.HTTP_200_OK)
                 vehicle = rfid_Card.vehicle
                 if vehicle == None:
                     return Response("No vehicle tagged with this RFID", status=status.HTTP_404_NOT_FOUND)

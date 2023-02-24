@@ -134,9 +134,11 @@ class Gate(models.Model):
     status = models.CharField(max_length=10, choices=choices, default='Active')
 
 class RFIDCard(models.Model):
-    tag_id = models.CharField(max_length=250, unique=True)
-    friendly_name = models.CharField(max_length=250, null=True)
+    tag_id = models.CharField(max_length=100, unique=True)
+    friendly_name = models.CharField(max_length=100, null=True)
     vehicle = models.OneToOneField(VehicleDetail, related_name='rfid_vehicle', on_delete=models.CASCADE, null=True)
+    rfid_class_choices = [('Truck', 'Truck'), ('Envirol', 'Envirol')]
+    rfid_class = models.CharField(max_length=10, choices=rfid_class_choices)
     created_by = models.ForeignKey(Account, related_name='rfid_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='rfid_modified_by', on_delete=models.CASCADE, null=True)

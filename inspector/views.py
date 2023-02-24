@@ -7,7 +7,7 @@ from .serializers import *
 from abacimodules.abacifunctions import smart_search_response_creator, get_locations_for_smart_search
 from entity.serializers import ServiceRequestListSerializer, EntityListSerializer, SubAreaListSerializer
 from django.db import transaction
-
+from django.http import Http404
 
 class ZoneList(APIView):
     def get(self, request):
@@ -131,3 +131,54 @@ class EntityDetailsForInspector(APIView):
             data = serializer.save(modified_by = request.user)
             return Response(EntityListSerializer(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EntityInspection(APIView):
+
+    def get(self, request):
+        data = EntityInspection.objects.exclude(status="Deleted")
+        serializer = EntityInspectionSerializer(data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = EntityInspectionSerializer(data = request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = serializer.save(created_by = request.user)
+        return Response(EntityInspectionSerializer(data).data, status=status.HTTP_200_OK)
+
+class EntityInspectionDetails(APIView):
+
+    def get_object(self, pk):
+        try:
+            return EntityInspection.objects.get(pk=pk)
+        except EntityInspection.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        data = self.get_object(pk)
+        serializer = EntityInspectionSerializer(data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        data = self.get_object(pk)
+        serializer = EntityInspectionSerializer(data, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(modified_by = request.user)
+            return Response(EntityInspectionSerializer(data).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EntityGreaseTrapInspection(APIView):
+
+    def get(self, request):
+        data = EntityGreaseTrapInspection.objects.exclude(status="Deleted")
+        serializer = EntityGreaseTrapInspectionSerializer(data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = EntityGreaseTrapInspectionSerializer(data = request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = serializer.save(created_by = request.user)
+        return Response(EntityGreaseTrapInspectionSerializer(data).data, status=status.HTTP_200_OK)
