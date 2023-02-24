@@ -13,7 +13,8 @@ def update_entity_grease_trap_cleaning_status():
             if grease_trap.cleaning_status == 'Due':
                 sr_required = False
             grease_trap.cleaning_status = 'Overdue'
-        if sr_required:
+        pending_grease_trap_sr = ServiceRequestDetail.objects.filter(grease_trap=grease_trap, status='Pending').exists()
+        if sr_required and not pending_grease_trap_sr:
             entity              = grease_trap.entity
             active_gtcc_detail  = entity.active_gtcc_detail
             if active_gtcc_detail.status == 'Active':
