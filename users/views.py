@@ -232,7 +232,12 @@ class UserDetails(APIView):
         data = self.get_object(pk)
         serializer = CreateUserSerializer(data, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save(modified_by = request.user)
+            password = request.data.get('password', None)
+            if password is not None:
+                password  =  make_password(password)
+                serializer.save(modified_by = request.user, password=password)
+            else:
+                serializer.save(modified_by = request.user)
             return Response(AccountSerializer(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

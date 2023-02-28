@@ -124,7 +124,7 @@ class Designation(models.Model):
 
 class Gate(models.Model):
     gate_name = models.CharField(max_length=100, unique=True)
-    gate_id  = models.CharField(max_length=32, unique=True, default=get_random_string(32), editable=False)
+    gate_id  = models.CharField(max_length=32, unique=True, editable=False)
     created_by = models.ForeignKey(Account, related_name='gate_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='gate_modified_by', on_delete=models.CASCADE, null=True)
@@ -135,6 +135,12 @@ class Gate(models.Model):
     gate_status_choices = [('Open', 'Open'), ('Closed', 'Closed')]
     gate_status = models.CharField(max_length=10, choices=gate_status_choices, default='Closed')
     status = models.CharField(max_length=10, choices=choices, default='Active')
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            self.gate_id  = get_random_string(32)
+            super().save(*args, **kwargs)
+        return self
 
 class RFIDCard(models.Model):
     tag_id = models.CharField(max_length=100, unique=True)

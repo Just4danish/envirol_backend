@@ -309,7 +309,8 @@ class DriverPostSerializer(serializers.Serializer):
         return driver
 
     def update(self, instance, validated_data):
-        gtcc = validated_data.get('gtcc')
+        gtcc        = validated_data.get('gtcc')
+        password    = validated_data.get('password', None)
         try:
             gtcc_obj = GTCC.objects.get(pk=gtcc)
         except GTCC.DoesNotExist:
@@ -317,6 +318,8 @@ class DriverPostSerializer(serializers.Serializer):
         first_name, last_name = name_maker(validated_data.get('name'))
         instance.first_name = first_name
         instance.last_name = last_name
+        if password:
+            instance.password  =  make_password(password)
         instance.emirate = validated_data.get('emirate')
         instance.license_no = validated_data.get('license_no')
         instance.contact_number = validated_data.get('contact_number')

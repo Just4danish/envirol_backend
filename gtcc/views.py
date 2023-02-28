@@ -383,7 +383,7 @@ class VehicleList(generics.ListCreateAPIView):
     serializer_class = VehicleListSerializer
 
     def get_queryset(self):
-        queryset = VehicleDetail.objects.exclude(status="Deleted")
+        queryset = VehicleDetail.objects.exclude(status="Deleted").order_by('id')
         id = self.request.query_params.get('id')
         if id is not None:
             queryset = queryset.filter(id=id)
