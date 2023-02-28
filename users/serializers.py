@@ -21,7 +21,7 @@ class UserLimitedDetailSerializer(serializers.ModelSerializer):
     designation = DesignationListSerializer()
     class Meta:
         model = Account
-        fields = ["id","full_name","email","contact_number", "designation","emirate","user_status","avatar"]
+        fields = ["id","full_name","email","username", "license_no","contact_number", "designation","emirate","user_status","avatar"]
 
 class CreateUserSerializer(serializers.ModelSerializer):
     class Meta:

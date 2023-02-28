@@ -129,8 +129,11 @@ class Gate(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(Account, related_name='gate_modified_by', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(auto_now=True)
+    last_query_time = models.DateTimeField(null=True)
+    remote_status_choices = [('Online', 'Online'), ('Offline', 'Offline')]
+    remote_status = models.CharField(max_length=10, choices=remote_status_choices, default='Offline')
     gate_status_choices = [('Open', 'Open'), ('Closed', 'Closed')]
-    gate_status = models.CharField(max_length=10, choices=choices, default='Closed')
+    gate_status = models.CharField(max_length=10, choices=gate_status_choices, default='Closed')
     status = models.CharField(max_length=10, choices=choices, default='Active')
 
 class RFIDCard(models.Model):

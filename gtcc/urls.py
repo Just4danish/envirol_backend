@@ -9,6 +9,7 @@ urlpatterns = [
     path('gtcc_and_drivers', GTCCAndDriversList.as_view()),
     path('payment_detail',PaymentList.as_view()),
     path('payment_detail/<int:pk>',PaymentDetails.as_view()),
+    path('add_refund',AddRefund.as_view()),
     path('vehicle_detail',VehicleList.as_view()),
     path('vehicle_detail/<int:pk>',VehicleDetails.as_view()),
     path('driver',DriverList.as_view()),

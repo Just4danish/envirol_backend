@@ -189,6 +189,28 @@ class PaymentPostSerializer(serializers.ModelSerializer):
             gtcc.credit_available += amount
             gtcc.save()
         return instance
+
+class RefundSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentDetail
+        fields = ['gtcc', 'amount']
+
+    def create(self, validated_data):
+        gtcc    = validated_data.get("gtcc")
+        amount  = validated_data.get("amount")
+        credit_available = gtcc.credit_available
+        if amount > credit_available:
+            raise serializers.ValidationError("Amount limit exceeded")
+        validated_data['previous_balance']      = credit_available
+        new_balance                             = credit_available - amount
+        validated_data['new_balance']           = new_balance
+        validated_data['payment_type']          = 'Debit'
+        validated_data['payment_date']          = timezone.now().date()
+        validated_data['mode_of_payment_id']    = 3
+        payment_detail = PaymentDetail.objects.create(**validated_data)
+        gtcc.credit_available = new_balance
+        gtcc.save()
+        return payment_detail
         
 class PaymentListSerializer(serializers.ModelSerializer):
     mode_of_payment = ModeOfPaymentListSerializer()

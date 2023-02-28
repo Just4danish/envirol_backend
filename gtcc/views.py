@@ -4,6 +4,7 @@ from rest_framework import status, generics, filters
 from entity.models import ServiceRequestDetail, ServiceRequestDetailImage, EntityGTCC
 from entity.serializers import ServiceRequestListSerializer, ServiceRequestDetailListSerializer, EntitySerializer, ServiceRequestSerializer, GTCCContractListSerializer
 from masters.models import Unitprice, Gate
+from masters.views import update_gate_last_query_time
 from .serializers import *
 from django.http import Http404,HttpResponse
 from django.db import transaction
@@ -354,12 +355,107 @@ class PaymentDetails(APIView):
             return Response(PaymentListSerializer(data).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class VehicleList(APIView):
+class AddRefund(APIView):
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = RefundSerializer(data = request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = serializer.save(created_by = request.user)
+        return Response(PaymentListSerializer(data).data, status=status.HTTP_200_OK)
+
+class VehicleList(generics.ListCreateAPIView):
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    fields   = [
+                    'id',
+                    'gtcc__establishment_name',
+                    'chassis_no',
+                    'vehicle_no',
+                    'rfid_vehicle__tag_id',
+                    'vehicle_type',
+                    'vehicle_tank_capacity',
+                    'status',
+                ]
+    search_fields   = fields
+    ordering_fields = fields
+    serializer_class = VehicleListSerializer
+
+    def get_queryset(self):
+        queryset = VehicleDetail.objects.exclude(status="Deleted")
+        id = self.request.query_params.get('id')
+        if id is not None:
+            queryset = queryset.filter(id=id)
+        gtcc__establishment_name = self.request.query_params.get('gtcc__establishment_name')
+        if gtcc__establishment_name is not None:
+            queryset = queryset.filter(gtcc__establishment_name__icontains=gtcc__establishment_name)
+        chassis_no = self.request.query_params.get('chassis_no')
+        if chassis_no is not None:
+            queryset = queryset.filter(chassis_no__icontains=chassis_no)
+        vehicle_no = self.request.query_params.get('vehicle_no')
+        if vehicle_no is not None:
+            queryset = queryset.filter(vehicle_no__icontains=vehicle_no)
+        rfid_vehicle__tag_id = self.request.query_params.get('rfid_vehicle__tag_id')
+        if rfid_vehicle__tag_id is not None:
+            queryset = queryset.filter(rfid_vehicle__tag_id__icontains=rfid_vehicle__tag_id)
+        vehicle_type = self.request.query_params.get('vehicle_type')
+        if vehicle_type is not None:
+            queryset = queryset.filter(vehicle_type__icontains=vehicle_type)
+        vehicle_tank_capacity = self.request.query_params.get('vehicle_tank_capacity')
+        if vehicle_tank_capacity is not None:
+            queryset = queryset.filter(vehicle_tank_capacity=vehicle_tank_capacity)
+        status = self.request.query_params.get('status')
+        if status is not None:
+            queryset = queryset.filter(status=status)
+        return queryset
+
+    def get_df(self):
+        self.pagination_class = None
+        records = self.filter_queryset(self.get_queryset())
+        df_records = pd.DataFrame.from_records(records.values_list(*self.fields))
+        columns_records  = [
+                                'Vehicle Id',
+                                'GTCC', 
+                                'Chassis No',
+                                'Vehicle No', 
+                                'RFID Card', 
+                                'Vehicle Type', 
+                                'Vehicle Tank Capacity', 
+                                'Status',
+                            ]
+        df_records.set_axis(columns_records, axis=1, inplace=True)
+        return df_records
 
     def get(self, request):
-        data = VehicleDetail.objects.exclude(status="Deleted")
-        serializer = VehicleListSerializer(data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        pdf_download = request.GET.get('pdf_download')
+        csv_download = request.GET.get('csv_download')
+        if (csv_download != None):
+            df = self.get_df()
+            df.set_index('Vehicle Id', inplace=True)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=file.csv'
+            df.to_csv(path_or_buf=response)
+            return response
+        elif (pdf_download != None):
+            df = self.get_df()
+            df = df.fillna('')
+            header = {
+                'Vehicle Id' : 'Vehicle Id',
+                'GTCC' : 'GTCC',
+                'Chassis No' : 'Chassis No',
+                'Vehicle No' : 'Vehicle No',
+                'RFID Card' : 'RFID Card',
+                'Vehicle Type' : 'Vehicle Type',
+                'Vehicle Tank Capacity' : 'Vehicle Tank Capacity',
+                'Status' : 'Status'
+            }
+            data = {
+                "header" : header,
+                "body" : df.to_dict(orient='records'),
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        return super(VehicleList, self).get(request)
 
     @transaction.atomic
     def post(self, request):
@@ -392,12 +488,97 @@ class VehicleDetails(APIView):
             return Response(VehicleListSerializer(data).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class DriverList(APIView):
+class DriverList(generics.ListCreateAPIView):
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    fields   = [
+                    'id',
+                    'username',
+                    'license_no',
+                    'full_name',
+                    'contact_number',
+                    'assigned_vehicle__vehicle_no',
+                    'emirate',
+                    'user_status',
+                ]
+    search_fields   = fields
+    ordering_fields = fields
+    serializer_class = UserLimitedDetailSerializer
+
+    def get_queryset(self):
+        queryset = Account.objects.filter(user_class='GTCC', user_type='Driver').exclude(user_status="Deleted")
+        id = self.request.query_params.get('id')
+        if id is not None:
+            queryset = queryset.filter(id=id)
+        username = self.request.query_params.get('username')
+        if username is not None:
+            queryset = queryset.filter(username=username)
+        license_no = self.request.query_params.get('license_no')
+        if license_no is not None:
+            queryset = queryset.filter(license_no__icontains=license_no)
+        full_name = self.request.query_params.get('full_name')
+        if full_name is not None:
+            queryset = queryset.filter(full_name__icontains=full_name)
+        contact_number = self.request.query_params.get('contact_number')
+        if contact_number is not None:
+            queryset = queryset.filter(contact_number__icontains=contact_number)
+        assigned_vehicle__vehicle_no = self.request.query_params.get('assigned_vehicle__vehicle_no')
+        if assigned_vehicle__vehicle_no is not None:
+            queryset = queryset.filter(assigned_vehicle__vehicle_no__icontains=assigned_vehicle__vehicle_no)
+        emirate = self.request.query_params.get('emirate')
+        if emirate is not None:
+            queryset = queryset.filter(emirate__icontains=emirate)
+        user_status = self.request.query_params.get('user_status')
+        if user_status is not None:
+            queryset = queryset.filter(user_status=user_status)
+        return queryset
+
+    def get_df(self):
+        self.pagination_class = None
+        records = self.filter_queryset(self.get_queryset())
+        df_records = pd.DataFrame.from_records(records.values_list(*self.fields))
+        columns_records  = [
+                                'Driver Id',
+                                'Login Id', 
+                                'Driving License',
+                                'Driver Name', 
+                                'Contact No', 
+                                'Assigned Vehicle', 
+                                'Emirate Id', 
+                                'Status',
+                            ]
+        df_records.set_axis(columns_records, axis=1, inplace=True)
+        return df_records
 
     def get(self, request):
-        data = Account.objects.filter(user_class='GTCC', user_type='Driver').exclude(user_status="Deleted")
-        serializer = UserLimitedDetailSerializer(data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        pdf_download = request.GET.get('pdf_download')
+        csv_download = request.GET.get('csv_download')
+        if (csv_download != None):
+            df = self.get_df()
+            df.set_index('Driver Id', inplace=True)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=file.csv'
+            df.to_csv(path_or_buf=response)
+            return response
+        elif (pdf_download != None):
+            df = self.get_df()
+            df = df.fillna('')
+            header = {
+                'Driver Id' : 'Driver Id',
+                'Login Id' : 'Login Id',
+                'Driving License' : 'Driving License',
+                'Driver Name' : 'Driver Name',
+                'Contact No' : 'Contact No',
+                'Assigned Vehicle' : 'Assigned Vehicle',
+                'Emirate Id' : 'Emirate Id',
+                'Status' : 'Status'
+            }
+            data = {
+                "header" : header,
+                "body" : df.to_dict(orient='records'),
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        return super(DriverList, self).get(request)
 
     @transaction.atomic
     def post(self, request):
@@ -1118,10 +1299,11 @@ class RFIDDetectionForVehicle(APIView):
         else:
             # return Response("Vehicle entered", status=status.HTTP_200_OK)
             try:
-                Gate.objects.get(gate_id=gate_id)
+                gate = Gate.objects.get(gate_id=gate_id)
             except Gate.DoesNotExist:
                 return Response("Invalid gate", status=status.HTTP_404_NOT_FOUND) 
             try:
+                update_gate_last_query_time(gate)
                 rfid_Card = RFIDCard.objects.get(tag_id=rfid)
                 if rfid_Card.rfid_class == 'Envirol':
                     return Response("Envirol vehicle", status=status.HTTP_200_OK)

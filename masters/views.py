@@ -490,6 +490,7 @@ class CheckGateStatus(APIView):
             return Response("Gate id is required", status=status.HTTP_400_BAD_REQUEST)
         try:
             gate = Gate.objects.get(gate_id=gate_id)
+            update_gate_last_query_time(gate)
             gate_status = gate.gate_status
             if gate_status == 'Open':
                 status_code = status.HTTP_200_OK
@@ -513,6 +514,7 @@ class UpdateGateStatus(APIView):
             return Response("Invalid gate status", status=status.HTTP_400_BAD_REQUEST)
         try:
             gate = Gate.objects.get(gate_id=gate_id)
+            update_gate_last_query_time(gate)
             gate.gate_status = gate_status
             gate.save()
             if gate_status == 'Open':
@@ -522,6 +524,11 @@ class UpdateGateStatus(APIView):
             return Response(gate_status, status=status_code)
         except Gate.DoesNotExist:
             raise Http404
+
+def update_gate_last_query_time(gate):
+    gate.last_query_time = timezone.now()
+    gate.remote_status = 'Online'
+    gate.save()
 
 class RFIDCardList(APIView):
 

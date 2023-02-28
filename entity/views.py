@@ -822,6 +822,10 @@ class ManageEntityGreaseTrap(generics.ListAPIView):
         grease_trap__description = self.request.query_params.get('grease_trap__description')
         if grease_trap__description is not None:
             queryset = queryset.filter(grease_trap__description__icontains=grease_trap__description)
+        start_date  = self.request.query_params.get('start_date')
+        end_date    = self.request.query_params.get('end_date')
+        if start_date != None and end_date != None:
+            queryset = queryset.filter(last_cleaning_date__gte=start_date, last_cleaning_date__lte=end_date)
         return queryset
 
     def get_df(self):
