@@ -90,10 +90,11 @@ def get_gtcc_from_foodwatch_id(foodwatch_id):
         else:
             raise ValidationError("GTCC not found")
 
-def create_entity_gtcc(entity, gtcc, user):
+def create_entity_gtcc(entity, gtcc, user, status = 'Approval Pending'):
     active_gtcc_detail = EntityGTCC.objects.create(
                     entity = entity,
                     gtcc = gtcc,
+                    status = status,
                     created_by = user
                 )
     entity.active_gtcc_detail = active_gtcc_detail
@@ -216,7 +217,10 @@ def get_foodwatch_enitity():
     }
 
     response = requests.request("GET", url, headers=headers, data=payload, files=files)
-    api_log  = APILog.objects.create(url = url)
+    api_log  = APILog.objects.create(
+        url = url,
+        api_class = 'ENTITY_INFO'
+    )
     return {
         "data"      : response,
         "api_log"   : api_log
@@ -233,7 +237,10 @@ def submit_service_request(entity_id, equipment_label, source = 'FGW'):
     }
 
     response = requests.request("POST", url, headers=headers, data=payload, files=files)
-    api_log  = APILog.objects.create(url = url)
+    api_log  = APILog.objects.create(
+        url = url,
+        api_class = 'SUBMIT_SR'
+    )
     return {
         "data"      : response,
         "api_log"   : api_log
@@ -250,7 +257,10 @@ def tag_equipment(entity_id, equipment_label):
     }
 
     response = requests.request("POST", url, headers=headers, data=payload, files=files)
-    api_log  = APILog.objects.create(url = url)
+    api_log  = APILog.objects.create(
+        url = url,
+        api_class = 'TAG_EQUIPMENT'
+    )
     return {
         "data"      : response,
         "api_log"   : api_log
@@ -319,18 +329,17 @@ def sync_foodwatch_enitity(request):
                                     if gtcc is not None:
                                         active_gtcc_detail  = entity_obj.active_gtcc_detail
                                         if active_gtcc_detail == None:
-                                            active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user)
+                                            active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user, status='Active')
                                         else:
                                             if active_gtcc_detail.gtcc == gtcc:
-                                                if active_gtcc_detail.status == 'Expired':
-                                                    active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user)
+                                                active_gtcc_detail = active_gtcc_detail.gtcc
                                             else:
                                                 check_active_gtcc = EntityGTCC.objects.filter(entity=entity_obj, status='Active').first()
                                                 if check_active_gtcc:
                                                     check_active_gtcc.status = 'Expired'
                                                     check_active_gtcc.contract_end = datetime.date.today()
                                                     check_active_gtcc.save()
-                                                active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user)
+                                                active_gtcc_detail = create_entity_gtcc(entity_obj, gtcc, request.user, status='Active')
                                 status = 'Synced'
                                 entity_obj.trade_license_no     = license_nr
                                 entity_obj.trade_license_name   = name_of_establishment
@@ -486,7 +495,7 @@ class ConvertEntity(APIView):
         if gtcc_foodwatch_id != 0:
             gtcc = GTCC.objects.filter(foodwatch_id=gtcc_foodwatch_id).first()
             if gtcc is not None:
-                active_gtcc_detail = create_entity_gtcc(entity, gtcc, request.user)
+                active_gtcc_detail = create_entity_gtcc(entity, gtcc, request.user, status='Active')
                 
         first_name, last_name = name_maker(contact_person)
         active_contact_person = Account.objects.create(

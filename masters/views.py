@@ -449,7 +449,7 @@ class DesignationDetails(APIView):
 class GateList(APIView):
 
     def get(self, request):
-        data = Gate.objects.exclude(status="Deleted")
+        data = Gate.objects.exclude(status="Deleted").order_by('id')
         serializer = GateListSerializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -490,7 +490,7 @@ class CheckGateStatus(APIView):
             return Response("Gate id is required", status=status.HTTP_400_BAD_REQUEST)
         try:
             gate = Gate.objects.get(gate_id=gate_id)
-            update_gate_last_query_time(gate)
+            update_gate_last_query_time(gate, 'Gate Status Check')
             gate_status = gate.gate_status
             if gate_status == 'Open':
                 status_code = status.HTTP_200_OK
@@ -514,7 +514,7 @@ class UpdateGateStatus(APIView):
             return Response("Invalid gate status", status=status.HTTP_400_BAD_REQUEST)
         try:
             gate = Gate.objects.get(gate_id=gate_id)
-            update_gate_last_query_time(gate)
+            update_gate_last_query_time(gate, 'Gate Status Update')
             gate.gate_status = gate_status
             gate.save()
             if gate_status == 'Open':
@@ -525,10 +525,20 @@ class UpdateGateStatus(APIView):
         except Gate.DoesNotExist:
             raise Http404
 
-def update_gate_last_query_time(gate):
+def update_gate_last_query_time(gate, type):
     gate.last_query_time = timezone.now()
+    gate.last_query_type = type
     gate.remote_status = 'Online'
     gate.save()
+
+def update_rfid_tapping_log(tapping_log, status, rfid_response, rfid=None, gate=None,  vehicle_entry_status='Failed'):
+    tapping_log.rfid                    = rfid
+    tapping_log.gate                    = gate
+    tapping_log.tapped_status           = status
+    tapping_log.vehicle_entry_status    = vehicle_entry_status
+    tapping_log.response_time           = timezone.now()
+    tapping_log.response                = rfid_response
+    tapping_log.save()
 
 class RFIDCardList(APIView):
 

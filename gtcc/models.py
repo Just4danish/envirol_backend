@@ -159,6 +159,7 @@ class VehicleEntryDetails(models.Model):
     operator_acceptance = models.CharField(max_length=10, choices=operator_acceptance_choice, default='Pending')
     remarks = models.TextField(null=True)
     job_log = models.JSONField(null=True)
+    delivery_order_file = models.FileField(null=True)
     current_status_choice = [("Entered","Entered"),("Exited","Exited")]
     current_status = models.CharField(max_length=10, choices=current_status_choice)
 
@@ -174,6 +175,11 @@ class VehicleEntryDetails(models.Model):
             self.txn_id = "DT" + str("{:06d}".format(max_id))
         super().save(*args, **kwargs)
         return self
+    
+class DeliveryOrderReport(models.Model):
+    vehicle_entry_details = models.ForeignKey(VehicleEntryDetails, related_name='do_vehicle_entry_details', on_delete=models.CASCADE)
+    pdf_content = models.JSONField()
+    created_date = models.DateTimeField(auto_now_add=True)
 
 class EditCouponLog(models.Model):
     coupon = models.ForeignKey(Coupon, related_name='edited_coupon', on_delete=models.CASCADE)

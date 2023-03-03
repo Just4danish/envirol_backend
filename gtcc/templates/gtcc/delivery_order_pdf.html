@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Delivery Order</title>
+    <style>
+       .link {
+        color: #000000;
+        text-decoration: none;
+      }
+      td { 
+
+line-height: auto;
+text-align: left;
+padding-top: 3px;
+margin: 3px;
+}
+tr{
+    vertical-align: top;
+}
+
+    </style>
+  </head>
+    <body>
+
+      <table id="header" style="width: 100%;">
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td >
+            <img
+            style="width: 40%; "
+            height=""
+          
+            src="C:\Users\ABACI-02\Downloads\Envirol.png"    
+            />
+          </td>
+
+          <td style="width: 40%; text-align: right; ">
+            <h3>
+                Envirol
+            </h3>
+            <p>
+                Warsan-2, Near Dubai Municipality,Dubai - United Arab Emirates
+              <br />
+
+              <a class="link" href="mailto:info@envirol.ae">
+                
+               info@envirol.ae
+              </a>
+              <br />
+            </p>
+          </td>
+        </tr>
+      </table>
+      <table border="0" style=" width: 100%; " >
+        <tbody>
+          <tr>
+            <td  colspan="2" style="text-align: center;"><b>DELIVERY ORDER</b></td>
+          </tr>
+          <tr>
+            <td style="width:70% ;"></td>
+            <td style="width: 30%;">
+              <table  style="width: 100%;  ">
+                <tbody>
+                  <tr>
+                    <td></td>
+                  <tr>
+                    <td style="padding: 3px; width: 40%;">Order No </td>
+                    <td>:</td>
+                    <td style="text-align: right;">{{vehicle_entry_details.txn_id}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 3px; width: 40%;">Order Date </td>
+                    <td>:</td>
+                    <td style="text-align: right;">{{vehicle_entry_details.exit_time|date:"m/d/Y"}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 3px; width: 40%;">Order Time</td>
+                    <td>:</td>
+                    <td style="text-align: right;">{{vehicle_entry_details.exit_time|date:"h:i A"}}</td>
+                  </tr>
+
+                    </td>
+                   
+                  </tr>
+                 
+                </tbody>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td></td>
+            <td></td>
+          </tr>
+
+          <tr>
+            <td  colspan="2"  style="border: 1px solid black;" height="20" >
+            <table style=" width: 100%; " border="0">
+              <tbody>
+                <tr>
+                    <td colspan="3" ><b>Customer Details</b></td>
+                </tr>
+                
+                <tr >
+                  <td >{{vehicle_entry_details.gtcc.establishment_name}}</td>
+                  <td style=" width:10%;" >Vehicle</td>
+                  <td style=" width:2%;">:</td>
+                  <td style=" width:20%;" >{{vehicle_entry_details.vehicle.vehicle_no}}</td>
+                </tr>
+                <tr>
+                  <td >{{vehicle_entry_details.gtcc.phone_no}}</td>
+                  <td  >Driver</td>
+                  <td>:</td>
+                  <td >{{vehicle_entry_details.driver.full_name}}</td>
+                  
+                </tr>
+                <tr style="padding-bottom: 3px;">
+                  <td >{{vehicle_entry_details.gtcc.office_email}}</td>
+                  <td >Operator</td>
+                  <td>:</td>
+                  <td>{{vehicle_entry_details.operator.full_name}}</td>
+                 
+                </tr>
+                
+              </tbody>
+            </table>
+            </td>
+            </tr>
+            <tr>
+              <td  height="20" colspan="2" ></td>
+            </tr>
+            <tr>
+                <td  height="20" colspan="2" ><b>Service Requests</b></td>
+            </tr>
+            <tr>
+              <td colspan="2"  >
+              <table style=" width: 100%;   border-collapse: collapse; " border="1">
+                <tbody>
+                  <tr>
+                    <td style="width: 55%; text-align: center;">
+                        <b>Description</b>
+                    </td>
+                    <td style="width: 15%;  text-align: center;" >
+                       <b> Number of Traps</b>
+                    </td>
+                    <td style="width: 15%;  text-align: center;" >
+                        <b>Quantity</b>
+                    </td>
+                    <td style=" width: 15%;  text-align: center;" >
+                       <b> Unit Rate</b>
+                    </td>
+                  </tr>
+                  {% for sr in srs %}
+                  <tr>
+                    <td >#{{sr.id}}</td>
+                    <td>{{sr.grease_trap_count}}</td>
+                    <td >{{sr.dumping_vehicledetails.total_gallon_dumped}}</td>
+                    <td style = "text-align: right;" >{{sr.dumping_vehicledetails.total_dumping_fee}}</td>
+                  </tr>
+                  {% endfor %}
+                  <tr>
+                    <td >Total</td>
+                    <td >{{total_grease_trap_count}}</td>
+                    <td >{{total_gallon_dumped}}</td>
+                    <td style = "text-align: right;" >{{total_dumping_fee}}</td>  
+                  </tr>
+                  <tr>
+                    <td height="20" style = "padding-bottom: 2px;" colspan="4">twenty thousand</td>
+                   </tr>
+                  <tr>
+                    <td style = "padding-top: 50px; padding-bottom: 2px;" height="60" colspan="4">Authorized signatory</td>
+                  </tr>
+                </tbody>
+              </table>
+          </td>
+            </tr>
+            
+             </table>
+            </body>
+            </html>

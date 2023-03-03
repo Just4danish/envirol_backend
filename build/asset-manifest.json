@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.dc038d65.css",
-    "main.js": "/static/js/main.00bf0f65.js",
+    "main.js": "/static/js/main.05d0aeca.js",
     "static/js/498.1c2a435c.chunk.js": "/static/js/498.1c2a435c.chunk.js",
     "static/js/703.d18c517b.chunk.js": "/static/js/703.d18c517b.chunk.js",
     "static/js/598.eba2cc79.chunk.js": "/static/js/598.eba2cc79.chunk.js",
@@ -54,14 +54,15 @@
     "static/media/fa-regular-400.ttf": "/static/media/fa-regular-400.c3146b3524e97475c094.ttf",
     "static/media/dripicons-v2.woff": "/static/media/dripicons-v2.f19dcc0358afed69d277.woff",
     "static/media/fa-regular-400.woff": "/static/media/fa-regular-400.8b892b7904a39e37c53d.woff",
-    "static/media/logo-dark.png": "/static/media/logo-dark.e929d66d413029db35e0.png",
     "static/media/fa-regular-400.woff2": "/static/media/fa-regular-400.c52405129ae48097815d.woff2",
+    "static/media/new_logo.png": "/static/media/new_logo.b7a9ec70bd3fc97f5424.png",
+    "static/media/dm_logo.png": "/static/media/dm_logo.f3e24e730c97469af2bd.png",
     "static/media/lg.svg?22t19m": "/static/media/lg.adb7aeef16adb8599e2d.svg",
     "static/media/lg.woff?22t19m": "/static/media/lg.0add59587d07387b771f.woff",
     "static/media/lg.ttf?22t19m": "/static/media/lg.a53dcc5ea47fe7d1d9fc.ttf",
     "index.html": "/index.html",
     "main.dc038d65.css.map": "/static/css/main.dc038d65.css.map",
-    "main.00bf0f65.js.map": "/static/js/main.00bf0f65.js.map",
+    "main.05d0aeca.js.map": "/static/js/main.05d0aeca.js.map",
     "498.1c2a435c.chunk.js.map": "/static/js/498.1c2a435c.chunk.js.map",
     "703.d18c517b.chunk.js.map": "/static/js/703.d18c517b.chunk.js.map",
     "598.eba2cc79.chunk.js.map": "/static/js/598.eba2cc79.chunk.js.map",
@@ -69,6 +70,6 @@
   },
   "entrypoints": [
     "static/css/main.dc038d65.css",
-    "static/js/main.00bf0f65.js"
+    "static/js/main.05d0aeca.js"
   ]
 }

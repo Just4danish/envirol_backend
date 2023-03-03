@@ -3,8 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status, generics, filters
 from entity.models import ServiceRequestDetail, ServiceRequestDetailImage, EntityGTCC
 from entity.serializers import ServiceRequestListSerializer, ServiceRequestDetailListSerializer, EntitySerializer, ServiceRequestSerializer, GTCCContractListSerializer
-from masters.models import Unitprice, Gate
-from masters.views import update_gate_last_query_time
+from masters.models import Unitprice, Gate, RFIDTappingLog
+from users.models import SendEmail
+from masters.views import update_gate_last_query_time, update_rfid_tapping_log
+from django.template.loader import render_to_string
+from abacimodules.abacifunctions import generate_pdf
 from .serializers import *
 from django.http import Http404,HttpResponse
 from django.db import transaction
@@ -1297,60 +1300,153 @@ class RFIDDetectionForVehicle(APIView):
         elif gate_id == None:
             return Response("Gate id is required", status=status.HTTP_404_NOT_FOUND)
         else:
-            # return Response("Vehicle entered", status=status.HTTP_200_OK)
+            tapping_log = RFIDTappingLog.objects.create(rfid_number = rfid)
             try:
                 gate = Gate.objects.get(gate_id=gate_id)
+                update_gate_last_query_time(gate, 'RFID Tapping')
+                print(gate.remote_status)
             except Gate.DoesNotExist:
-                return Response("Invalid gate", status=status.HTTP_404_NOT_FOUND) 
+                rfid_response = 'Invalid gate'
+                update_rfid_tapping_log(tapping_log, 'Failed', rfid_response)
+                return Response(rfid_response, status=status.HTTP_404_NOT_FOUND) 
             try:
-                update_gate_last_query_time(gate)
                 rfid_Card = RFIDCard.objects.get(tag_id=rfid)
-                if rfid_Card.rfid_class == 'Envirol':
-                    return Response("Envirol vehicle", status=status.HTTP_200_OK)
-                vehicle = rfid_Card.vehicle
-                if vehicle == None:
-                    return Response("No vehicle tagged with this RFID", status=status.HTTP_404_NOT_FOUND)
-                if vehicle.status != "Active":
-                    return Response("Vehicle not found", status=status.HTTP_404_NOT_FOUND)
-                driver  = vehicle.driver
-                gtcc    = vehicle.gtcc
-                if driver == None:
-                    return Response("No driver is associated with this vehicle", status=status.HTTP_404_NOT_FOUND)
-                if gtcc.status != "Active":
-                    return Response("GTCC not found", status=status.HTTP_404_NOT_FOUND)
-                if gtcc.credit_available <=0:
-                    return Response("Credit not available", status=status.HTTP_406_NOT_ACCEPTABLE)
-                vehicle_entry_list = VehicleEntryDetails.objects.filter(vehicle = vehicle, current_status = 'Entered')   
-                if len(vehicle_entry_list) != 0:
-                    return Response("Vehicle already entered", status=status.HTTP_406_NOT_ACCEPTABLE)
-                srs_processing = ServiceRequest.objects.filter(vehicle=vehicle, status='Processing')
-                if len(srs_processing) != 0:
-                    return Response("There is processing jobs found. Complete jobs before entering yard", status=status.HTTP_406_NOT_ACCEPTABLE)
-                srs_completed = ServiceRequest.objects.filter(vehicle=vehicle, status='Completed')
-                if len(srs_completed) == 0:
-                    return Response("There is no completed service request found", status=status.HTTP_406_NOT_ACCEPTABLE)
-                total_waste_collected = srs_completed.aggregate(Sum('total_gallon_collected'))['total_gallon_collected__sum']
-                vehicle_entry_details = VehicleEntryDetails.objects.create(
-                                        vehicle = vehicle,
-                                        driver = driver,
-                                        total_gallon_collected = total_waste_collected,
-                                        gtcc = gtcc,
-                                        entry_time = timezone.now(),
-                                        current_status = 'Entered'
-                                    )
-                for sr_completed in srs_completed:
-                    sr_completed.dumping_vehicledetails = vehicle_entry_details
-                    sr_completed.save()
-                return Response("Vehicle entered", status=status.HTTP_423_LOCKED)
             except RFIDCard.DoesNotExist:
-                #return Response("RFID details not found", status=status.HTTP_404_NOT_FOUND)
-                return Response("RFID details not found", status=status.HTTP_200_OK)
-                # this is for temperory need to change it later      
+                rfid_response = 'RFID not found'
+                update_rfid_tapping_log(tapping_log, 'Failed', rfid_response, None, gate)
+                return Response(rfid_response, status=status.HTTP_200_OK)
+            if rfid_Card.status != 'Active':
+                rfid_response = 'RFID is currently disabled/deleted'
+                update_rfid_tapping_log(tapping_log, 'Failed', rfid_response, rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_404_NOT_FOUND)
+            if rfid_Card.rfid_class == 'Envirol':
+                rfid_response = 'Envirol vehicle'
+                update_rfid_tapping_log(tapping_log, 'Success', rfid_response, rfid_Card, gate, 'Success')
+                return Response(rfid_response, status=status.HTTP_200_OK)
+            vehicle = rfid_Card.vehicle
+            if vehicle == None:
+                rfid_response = 'No vehicle tagged with this RFID'
+                update_rfid_tapping_log(tapping_log, 'Success', rfid_response, rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_404_NOT_FOUND)
+            if vehicle.status != "Active":
+                rfid_response = f'Vehicle {vehicle.vehicle_no} is currently disabled/deleted'
+                update_rfid_tapping_log(tapping_log, 'Success', rfid_response, rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_404_NOT_FOUND)
+            driver  = vehicle.driver
+            gtcc    = vehicle.gtcc
+            if driver == None:
+                rfid_response = f'No driver is associated with vehicle {vehicle.vehicle_no}'
+                update_rfid_tapping_log(tapping_log, 'Success', rfid_response, rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_404_NOT_FOUND)
+            if gtcc.status != "Active":
+                rfid_response = 'GTCC not found'
+                update_rfid_tapping_log(tapping_log, 'Success', f"{rfid_response} (vehicle : {vehicle.vehicle_no})", rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_404_NOT_FOUND)
+            if gtcc.credit_available <=0:
+                rfid_response = 'Credit not available'
+                update_rfid_tapping_log(tapping_log, 'Success', f"{rfid_response} (vehicle : {vehicle.vehicle_no})", rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_406_NOT_ACCEPTABLE)
+            vehicle_entry_list = VehicleEntryDetails.objects.filter(vehicle = vehicle, current_status = 'Entered')   
+            if len(vehicle_entry_list) != 0:
+                rfid_response = f'Vehicle {vehicle.vehicle_no} already entered'
+                update_rfid_tapping_log(tapping_log, 'Success', rfid_response, rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_406_NOT_ACCEPTABLE)
+            srs_processing = ServiceRequest.objects.filter(vehicle=vehicle, status='Processing')
+            if len(srs_processing) != 0:
+                rfid_response = 'There is processing jobs found. Complete jobs before entering yard'
+                update_rfid_tapping_log(tapping_log, 'Success', f"{rfid_response} (vehicle : {vehicle.vehicle_no})", rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_406_NOT_ACCEPTABLE)
+            srs_completed = ServiceRequest.objects.filter(vehicle=vehicle, status='Completed')
+            if len(srs_completed) == 0:
+                rfid_response = 'There is no completed service request found'
+                update_rfid_tapping_log(tapping_log, 'Success', f"{rfid_response} (vehicle : {vehicle.vehicle_no})", rfid_Card, gate)
+                return Response(rfid_response, status=status.HTTP_406_NOT_ACCEPTABLE)
+            total_waste_collected = srs_completed.aggregate(Sum('total_gallon_collected'))['total_gallon_collected__sum']
+            vehicle_entry_details = VehicleEntryDetails.objects.create(
+                                    vehicle = vehicle,
+                                    driver = driver,
+                                    total_gallon_collected = total_waste_collected,
+                                    gtcc = gtcc,
+                                    entry_time = timezone.now(),
+                                    current_status = 'Entered'
+                                )
+            for sr_completed in srs_completed:
+                sr_completed.dumping_vehicledetails = vehicle_entry_details
+                sr_completed.save()
+            rfid_response = f'Vehicle {vehicle.vehicle_no} entered'
+            update_rfid_tapping_log(tapping_log, 'Success', rfid_response, rfid_Card, gate, 'Success')
+            return Response(rfid_response, status=status.HTTP_423_LOCKED)     
 
 def vehicle_details_for_operator_maker(vehicle_id):
     vehicle = VehicleDetail.objects.get(id = vehicle_id)
     serialized_data = VehicleListSerializer(vehicle).data
     return serialized_data
+
+class RFIDTappingLogList(generics.ListCreateAPIView):
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    fields   = [
+                    'rfid_number',
+                    'tapped_status',
+                    'vehicle_entry_status',
+                    'tapped_time',
+                    'response_time',
+                    'response',
+                ]
+    search_fields   = fields
+    ordering_fields = fields
+    serializer_class = RFIDTappingLogSerializer
+
+    def get_queryset(self):
+        queryset = RFIDTappingLog.objects.all().order_by('-id')
+        start_date  = self.request.query_params.get('start_date')
+        end_date    = self.request.query_params.get('end_date')
+        if start_date != None and end_date != None:
+            queryset = queryset.filter(tapped_time__gte=start_date, tapped_time__lte=end_date)
+        return queryset
+
+    def get_df(self):
+        self.pagination_class = None
+        records = self.filter_queryset(self.get_queryset())
+        df_records = pd.DataFrame.from_records(records.values_list(*self.fields))
+        columns_records  = [
+                                'RFID Number',
+                                'Tapped Status', 
+                                'Vehicle Entry Status',
+                                'Tapped Time', 
+                                'Response Time', 
+                                'Response',
+                            ]
+        df_records.set_axis(columns_records, axis=1, inplace=True)
+        return df_records
+
+    def get(self, request):
+        pdf_download = request.GET.get('pdf_download')
+        csv_download = request.GET.get('csv_download')
+        if (csv_download != None):
+            df = self.get_df()
+            df.set_index('RFID Number', inplace=True)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=file.csv'
+            df.to_csv(path_or_buf=response)
+            return response
+        elif (pdf_download != None):
+            df = self.get_df()
+            df = df.fillna('')
+            header = {
+                'RFID Number' : 'RFID Number',
+                'Tapped Status' : 'Tapped Status',
+                'Vehicle Entry Status' : 'Vehicle Entry Status',
+                'Tapped Time' : 'Tapped Time',
+                'Response Time' : 'Response Time',
+                'Response' : 'Response',
+            }
+            data = {
+                "header" : header,
+                "body" : df.to_dict(orient='records'),
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        return super(RFIDTappingLogList, self).get(request)
 
 class VehicleDetailsForOperatorView(APIView):
     def get(self, request, pk):
@@ -1501,16 +1597,18 @@ class VehicleStatusUpdate(APIView):
         
 
 class OperatorDumpingAcceptanceView(APIView):
+
     @transaction.atomic
     def post(self, request):
-        data = request.data
+        data  = request.data
+        today = timezone.now()
         total_gallon_dumped = data['total_gallon_dumped']
         try:
             vehicle_entry_details = VehicleEntryDetails.objects.get(id = data['vehicle_entry_details_id'])
         except:
             return Response({'error' : 'Vehicle not found'}, status=status.HTTP_400_BAD_REQUEST)
         operator_acceptance = data['operator_acceptance']
-        # if (data['operator_acceptance'] == 'Accepted'):
+        
         gtcc                    = vehicle_entry_details.gtcc
         if operator_acceptance == 'Accepted':
             unit_price_model, _     = Unitprice.objects.get_or_create()
@@ -1532,14 +1630,20 @@ class OperatorDumpingAcceptanceView(APIView):
                 coupon.status = 'Used'
                 coupon.save()
         # Now we need to update all the SRs as dumber
-        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
+        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver', 'dumping_vehicledetails')
         sr_ids_array = []
+        total_gallon_dumped = 0
+        total_dumping_fee = 0
+        total_grease_trap_count = 0
         for sr in srs:
             sr_ids_array.append(sr.id)
             if operator_acceptance == 'Accepted':
+                total_gallon_dumped += sr.dumping_vehicledetails.total_gallon_dumped
+                total_dumping_fee += sr.dumping_vehicledetails.total_dumping_fee
+                total_grease_trap_count += sr.grease_trap_count
                 driver              = sr.driver
                 sr.status           = 'Discharged'
-                sr.discharge_time   = timezone.now()
+                sr.discharge_time   = today
                 sr.save()
                 ServiceRequestLog.objects.create(
                     service_request     = sr,
@@ -1554,11 +1658,33 @@ class OperatorDumpingAcceptanceView(APIView):
             "srs"       : sr_ids_array
         }
         vehicle_entry_details.operator              = request.user   
-        vehicle_entry_details.operator_acceptance   = data['operator_acceptance']
-        vehicle_entry_details.exit_time             = timezone.now()
+        vehicle_entry_details.operator_acceptance   = operator_acceptance
+        vehicle_entry_details.exit_time             = today
         vehicle_entry_details.job_log               = json.dumps(job_log)
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
+        if operator_acceptance == 'Accepted':
+            if gtcc.credit_available < 1500:
+                send_low_balance_mail(gtcc)
+            pdf_content = {
+                "vehicle_entry_details"     : vehicle_entry_details,
+                "srs"                       : srs,
+                "total_gallon_dumped"       : total_gallon_dumped,
+                "total_dumping_fee"         : total_dumping_fee,
+                "total_grease_trap_count"   : total_grease_trap_count
+            }
+            template_path   =   'gtcc/delivery_order_pdf.html'
+            destination     =   'media/gtcc_delivery_orders'
+            filename        =   f'{vehicle_entry_details.txn_id}.pdf'
+            file_path       =   destination + "/" + filename
+            generate_do     =   generate_pdf(template_path, destination, pdf_content, file_path)
+            if generate_do:
+                DeliveryOrderReport.objects.create(
+                    vehicle_entry_details = vehicle_entry_details,
+                    pdf_content = pdf_content
+                )
+                vehicle_entry_details.delivery_order_file  = file_path
+                send_delivery_order_mail(gtcc, file_path)
         vehicle_entry_details.save()
         try:
             gate = Gate.objects.get(pk=2)
@@ -1573,6 +1699,59 @@ class OperatorDumpingAcceptanceView(APIView):
                     'jobs'              : jobs
                 }
         return Response(data, status=status.HTTP_200_OK)
+
+def send_low_balance_mail(gtcc):
+    subject         = "Low Balance"
+    template_name   = 'gtcc/low_balance.html'
+    context = {
+        "gtcc"              : gtcc.establishment_name,
+        "credit_available"  : gtcc.credit_available
+    }
+    html_message    = render_to_string(template_name, context)
+    receivers       = [gtcc.active_contact_person.email, gtcc.office_email]
+    SendEmail(subject, html_message, receivers).start()
+
+def send_delivery_order_mail(gtcc, file):
+    subject         = "Delivery Order"
+    template_name   = 'gtcc/delivery_order_mail.html'
+    context = {}
+    html_message    = render_to_string(template_name, context)
+    receivers       = [gtcc.active_contact_person.email, gtcc.office_email]
+    SendEmail(subject, html_message, receivers, file).start()
+
+#temp need to remove
+class GeneratePdf(APIView):
+    
+    permission_classes = [AllowAny]
+    def get(self, request, *args, **kwargs):
+        vehicle_entry_details = VehicleEntryDetails.objects.get(id = 1)
+        srs = ServiceRequest.objects.filter(pk = 1).select_related('driver')
+        total_gallon_dumped = 0
+        total_dumping_fee = 0
+        total_grease_trap_count = 0
+        for sr in srs:
+            total_gallon_dumped += sr.dumping_vehicledetails.total_gallon_dumped
+            total_dumping_fee += sr.dumping_vehicledetails.total_dumping_fee
+            total_grease_trap_count += sr.grease_trap_count
+        pdf_content = {
+                "vehicle_entry_details" :vehicle_entry_details,
+                "srs"                   : srs,
+                "total_gallon_dumped"   : total_gallon_dumped,
+                "total_dumping_fee"     : total_dumping_fee,
+                "total_grease_trap_count" : total_grease_trap_count
+            }
+        template_path   =   'gtcc/delivery_order_pdf.html'
+        destination     =   'media/gtcc_delivery_orders'
+        filename        =   "gtcc.pdf"
+        file_path       =   destination + "/" + filename
+        do = generate_pdf(template_path, destination, pdf_content, file_path)
+        if do:
+            subject         = "Delivery Order"
+            template_name   = 'gtcc/delivery_order_mail.html'
+            context = {}
+            html_message    = render_to_string(template_name, context)
+            receivers       = ["pakhil77@gmail.com"]
+            SendEmail(subject, html_message, receivers, file_path).start()
 
 #Dashboard API
 class WalletDetails(APIView):

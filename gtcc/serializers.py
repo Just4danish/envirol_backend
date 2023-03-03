@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from entity.models import ServiceRequest, ServiceRequestLog
-from masters.models import RFIDCard, Designation
+from masters.models import RFIDCard, Designation, RFIDTappingLog
 from .models import *
 from users.models import Account
 from users.serializers import UserLimitedDetailSerializer
-from masters.serializers import ModeOfPaymentListSerializer, RFIDCardLimitedListSerializer
+from masters.serializers import ModeOfPaymentListSerializer, RFIDCardLimitedListSerializer, GateListSerializer
 from abacimodules.abacifunctions import name_maker
 from django.utils.crypto import get_random_string
 from django.contrib.auth.hashers import make_password
@@ -536,4 +536,10 @@ class EditCouponLogSerializer(serializers.ModelSerializer):
     edited_by = UserLimitedDetailSerializer()
     class Meta:
         model = EditCouponLog
+        fields = '__all__'
+
+class RFIDTappingLogSerializer(serializers.ModelSerializer):
+    gate = GateListSerializer()
+    class Meta:
+        model = RFIDTappingLog
         fields = '__all__'

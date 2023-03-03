@@ -43,6 +43,6 @@ def call_food_watch_sr_api(sender, instance, created, **kwargs):
             grease_trap_label   = grease_trap.grease_trap_label
             api_response    = submit_service_request(entity_foodwatch_id, grease_trap_label)
             api_log         = save_api_log(api_response)
-            if service_request.foodwatch_srid == None and api_log['status']:
+            if api_log['status']:
                 service_request.foodwatch_srid = api_log['result']
                 service_request.save()

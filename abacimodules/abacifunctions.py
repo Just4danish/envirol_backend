@@ -8,6 +8,10 @@ from entity.models import EntityGTCC
 from django.conf import settings
 import datetime
 import os
+from io import BytesIO
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -30,6 +34,17 @@ def name_maker(contact_person_temp):
         firstNameTemp = contact_person_temp
         lastNameTemp = None
     return (firstNameTemp, lastNameTemp)
+
+def generate_pdf(template_path, destination_folder, pdf_content, file_path):
+    if not os.path.isdir(destination_folder):
+        os.mkdir(destination_folder)
+    template        =   get_template(template_path)
+    html            =   template.render(pdf_content)
+    result_file     =   open(file_path, "w+b")
+    if pisa.CreatePDF(html, result_file):
+        return True
+    else:
+        return False
 
 def get_data_from_db(command):
     cursor = connection.cursor()

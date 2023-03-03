@@ -70,7 +70,7 @@ class GreaseTrap(models.Model):
             except GreaseTrap.DoesNotExist:
                 max_id = 1
             self.grease_trap_id  = "TP" + str("{:04d}".format(max_id))
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
         return self
 
 class Fixture(models.Model):
@@ -130,6 +130,7 @@ class Gate(models.Model):
     modified_by = models.ForeignKey(Account, related_name='gate_modified_by', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(auto_now=True)
     last_query_time = models.DateTimeField(null=True)
+    last_query_type = models.CharField(null=True, max_length=20)
     remote_status_choices = [('Online', 'Online'), ('Offline', 'Offline')]
     remote_status = models.CharField(max_length=10, choices=remote_status_choices, default='Offline')
     gate_status_choices = [('Open', 'Open'), ('Closed', 'Closed')]
@@ -139,7 +140,7 @@ class Gate(models.Model):
     def save(self, *args, **kwargs):
         if self.pk is None:
             self.gate_id  = get_random_string(32)
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
         return self
 
 class RFIDCard(models.Model):
@@ -153,6 +154,18 @@ class RFIDCard(models.Model):
     modified_by = models.ForeignKey(Account, related_name='rfid_modified_by', on_delete=models.CASCADE, null=True)
     modified_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10, choices=choices, default='Active')
+
+class RFIDTappingLog(models.Model):
+    rfid_number = models.CharField(max_length=20)
+    rfid = models.ForeignKey(RFIDCard, related_name='tapped_rfid', on_delete=models.CASCADE, null=True)
+    gate = models.ForeignKey(Gate, related_name='tapped_gate', on_delete=models.CASCADE, null=True)
+    tapped_status_choices = [('Pending', 'Pending'), ('Success', 'Success'), ('Failed', 'Failed')]
+    tapped_status = models.CharField(max_length=10, choices=tapped_status_choices, default='Pending')
+    vehicle_entry_status_choices = [('Success', 'Success'), ('Failed', 'Failed')]
+    vehicle_entry_status = models.CharField(max_length=10, choices=vehicle_entry_status_choices, default='Failed')
+    tapped_time = models.DateTimeField(auto_now_add=True)
+    response_time = models.DateTimeField(null=True)
+    response = models.CharField(max_length=100, null=True)
 
 class Notification(models.Model):
     start_time = models.DateTimeField()

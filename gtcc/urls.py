@@ -41,6 +41,7 @@ urlpatterns = [
     path('vehicle_details_operator/<int:pk>', VehicleDetailsForOperatorView.as_view()),
     path('rfid_detection_for_vehicle', RFIDDetectionForVehicle.as_view()),
     path('rfid_detection_for_vehicle_test/<str:rfid>', RFIDDetectionForVehicleTemp.as_view()),
+    path('rfid_tapping_log', RFIDTappingLogList.as_view()),
     path('gtcc_contract_list', GTCCContractList.as_view()),
     path('approve_or_reject_entity_contract', ApproveOrRejectEntityContract.as_view()),
     path('vehicle_status_update', VehicleStatusUpdate.as_view()),#this is temporary, needs to remove.
@@ -55,6 +56,7 @@ urlpatterns = [
     path('import_excel', ExcelOrCSVUploadView.as_view()),
     path('validate_import_gtcc', ValidateImportGTCC.as_view()),
     path('import_gtcc', ImportGTCC.as_view()),
+    path('GeneratePdf', GeneratePdf.as_view()),
 ]
 
 #Dashboard API URLS

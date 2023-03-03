@@ -203,14 +203,18 @@ class LoginDetail(models.Model):
 
 
 class SendEmail(threading.Thread):
-    def __init__(self, subject, html_message,receivers):
-        self.subject = subject
-        self.html_message =html_message
-        self.sender = settings.SENDER_EMAIL
-        self.receivers = receivers
+    def __init__(self, subject, html_message, receivers, attachment=None):
+        self.subject        = subject
+        self.html_message   = html_message
+        self.sender         = settings.SENDER_EMAIL
+        self.receivers      = receivers
+        if attachment:
+            self.attachment = attachment
         threading.Thread.__init__(self)
     def run(self):
         message = EmailMessage(self.subject, self.html_message,self.sender,self.receivers)
         message.content_subtype = 'html'
+        if self.attachment:
+            message.attach_file(self.attachment)
         a = message.send()
         

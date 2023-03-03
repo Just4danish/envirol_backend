@@ -51,6 +51,7 @@ class FoodwatchEntity(models.Model):
 
 class APILog(models.Model):
     url = models.URLField()
+    api_class = models.CharField(max_length=100)
     call_time = models.DateTimeField(auto_now_add=True)
     response_time = models.DateTimeField(null=True)
     response = models.JSONField(null=True)
