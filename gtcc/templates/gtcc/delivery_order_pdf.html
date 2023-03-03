@@ -158,14 +158,14 @@ tr{
                   <tr>
                     <td >#{{sr.id}}</td>
                     <td>{{sr.grease_trap_count}}</td>
-                    <td >{{sr.dumping_vehicledetails.total_gallon_dumped}}</td>
+                    <td >{{sr.total_gallon_collected}}</td>
                     <td style = "text-align: right;" >{{sr.dumping_vehicledetails.total_dumping_fee}}</td>
                   </tr>
                   {% endfor %}
                   <tr>
                     <td >Total</td>
                     <td >{{total_grease_trap_count}}</td>
-                    <td >{{total_gallon_dumped}}</td>
+                    <td >{{total_gallon_collected}}</td>
                     <td style = "text-align: right;" >{{total_dumping_fee}}</td>  
                   </tr>
                   <tr>

@@ -12933,3 +12933,6 @@
 192.241.194.16 - - [03/Mar/2023:15:13:45 +0400] "GET /autodiscover/autodiscover.json?@zdi/Powershell HTTP/1.1" 404 2544 "-" "Mozilla/5.0 zgrab/0.x"
 109.237.97.180 - - [03/Mar/2023:15:58:31 +0400] "GET /.env HTTP/1.1" 400 666 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
 109.237.97.180 - - [03/Mar/2023:15:58:32 +0400] "GET /.env HTTP/1.1" 404 2506 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+176.58.114.192 - - [03/Mar/2023:16:26:25 +0400] "GET / HTTP/1.1" 404 2484 "-" "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:8.0) Gecko/20100101 Firefox/8.0"
+34.76.96.55 - - [03/Mar/2023:16:30:40 +0400] "GET / HTTP/1.1" 404 2488 "-" "python-requests/2.28.2"
+208.78.41.85 - - [03/Mar/2023:16:40:09 +0400] "GET /aaa9 HTTP/1.1" 404 2502 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
