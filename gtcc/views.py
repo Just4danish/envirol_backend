@@ -1661,13 +1661,14 @@ class OperatorDumpingAcceptanceView(APIView):
         vehicle_entry_details.job_log               = json.dumps(job_log)
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
+        vehicle_entry_details.save()
         vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
         if operator_acceptance == 'Accepted':
             if gtcc.credit_available < 1500:
                 send_low_balance_mail(gtcc)
             pdf_content = {
                 "vehicle_entry_details"     : vehicle_details,
-                "srs"                       : list(srs),
+                "srs"                       : ServiceRequestSerializer(srs, many=True).data,
                 "total_gallon_collected"    : total_gallon_collected,
                 "total_grease_trap_count"   : total_grease_trap_count,
             }
@@ -1682,8 +1683,8 @@ class OperatorDumpingAcceptanceView(APIView):
                     pdf_content = pdf_content
                 )
                 vehicle_entry_details.delivery_order_file  = file_path
+                vehicle_entry_details.save()
                 send_delivery_order_mail(gtcc, file_path)
-        vehicle_entry_details.save()
         try:
             gate = Gate.objects.get(pk=2)
             gate.gate_status = 'Open'

@@ -13131,3 +13131,5 @@
 152.89.196.211 - - [06/Mar/2023:10:31:25 +0400] "GET /?XDEBUG_SESSION_START=phpstorm HTTP/1.1" 404 2524 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
 107.170.238.4 - - [06/Mar/2023:10:59:46 +0400] "GET /owa/auth/logon.aspx?url=https%3a%2f%2f1%2fecp%2f HTTP/1.1" 404 2538 "-" "Mozilla/5.0 zgrab/0.x"
 54.183.247.73 - - [06/Mar/2023:11:06:43 +0400] "GET / HTTP/1.1" 404 2492 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
+20.122.152.240 - - [06/Mar/2023:11:55:40 +0400] "GET /.env HTTP/1.1" 404 2508 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+20.122.152.240 - - [06/Mar/2023:11:55:41 +0400] "POST / HTTP/1.1" 404 2490 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
