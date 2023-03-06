@@ -36,6 +36,7 @@ tr{
           
             src="C:\Users\ABACI-02\Downloads\Envirol.png"    
             />
+            {% load static %} <img src="{% static "envirol_backend/media/logo.png" %}" alt="logo" />
           </td>
 
           <td style="width: 40%; text-align: right; ">
@@ -144,33 +145,30 @@ tr{
                     <td style="width: 55%; text-align: center;">
                         <b>Description</b>
                     </td>
+                    <td style=" width: 15%;  text-align: center;" >
+                      <b>Collected At</b>
+                    </td>
                     <td style="width: 15%;  text-align: center;" >
                        <b> Number of Traps</b>
                     </td>
                     <td style="width: 15%;  text-align: center;" >
-                        <b>Quantity</b>
-                    </td>
-                    <td style=" width: 15%;  text-align: center;" >
-                       <b> Unit Rate</b>
+                        <b>Waste Collected</b>
                     </td>
                   </tr>
                   {% for sr in srs %}
                   <tr>
-                    <td >#{{sr.id}}</td>
+                    <td >#{{sr.id}} {{sr.entity.establishment_name}} requested on {{sr.created_date|date:"m/d/Y h:i A"}}</td>
+                    <td>{{sr.collection_completion_time|date:"m/d/Y h:i A"}}</td>
                     <td>{{sr.grease_trap_count}}</td>
                     <td >{{sr.total_gallon_collected}}</td>
-                    <td style = "text-align: right;" >{{sr.dumping_vehicledetails.total_dumping_fee}}</td>
                   </tr>
                   {% endfor %}
                   <tr>
-                    <td >Total</td>
+                    <td ></td>
+                    <td>Total</td>
                     <td >{{total_grease_trap_count}}</td>
                     <td >{{total_gallon_collected}}</td>
-                    <td style = "text-align: right;" >{{total_dumping_fee}}</td>  
                   </tr>
-                  <tr>
-                    <td height="20" style = "padding-bottom: 2px;" colspan="4">twenty thousand</td>
-                   </tr>
                   <tr>
                     <td style = "padding-top: 50px; padding-bottom: 2px;" height="60" colspan="4">Authorized signatory</td>
                   </tr>

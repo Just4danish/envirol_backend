@@ -1630,16 +1630,14 @@ class OperatorDumpingAcceptanceView(APIView):
                 coupon.status = 'Used'
                 coupon.save()
         # Now we need to update all the SRs as dumber
-        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver', 'dumping_vehicledetails')
+        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver', 'entity', 'dumping_vehicledetails')
         sr_ids_array = []
         total_gallon_collected = 0
-        total_dumping_fee = 0
         total_grease_trap_count = 0
         for sr in srs:
             sr_ids_array.append(sr.id)
             if operator_acceptance == 'Accepted':
                 total_gallon_collected += sr.total_gallon_collected
-                total_dumping_fee += sr.dumping_vehicledetails.total_dumping_fee
                 total_grease_trap_count += sr.grease_trap_count
                 driver              = sr.driver
                 sr.status           = 'Discharged'
@@ -1663,28 +1661,28 @@ class OperatorDumpingAcceptanceView(APIView):
         vehicle_entry_details.job_log               = json.dumps(job_log)
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
-        # if operator_acceptance == 'Accepted':
-        #     if gtcc.credit_available < 1500:
-        #         send_low_balance_mail(gtcc)
-        #     pdf_content = {
-        #         "vehicle_entry_details"     : vehicle_entry_details,
-        #         "srs"                       : srs,
-        #         "total_gallon_collected"    : total_gallon_collected,
-        #         "total_dumping_fee"         : total_dumping_fee,
-        #         "total_grease_trap_count"   : total_grease_trap_count
-        #     }
-        #     template_path   =   'gtcc/delivery_order_pdf.html'
-        #     destination     =   'media/gtcc_delivery_orders'
-        #     filename        =   f'{vehicle_entry_details.txn_id}.pdf'
-        #     file_path       =   destination + "/" + filename
-        #     generate_do     =   generate_pdf(template_path, destination, pdf_content, file_path)
-        #     if generate_do:
-        #         DeliveryOrderReport.objects.create(
-        #             vehicle_entry_details = vehicle_entry_details,
-        #             pdf_content = pdf_content
-        #         )
-        #         vehicle_entry_details.delivery_order_file  = file_path
-        #         send_delivery_order_mail(gtcc, file_path)
+        vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
+        if operator_acceptance == 'Accepted':
+            if gtcc.credit_available < 1500:
+                send_low_balance_mail(gtcc)
+            pdf_content = {
+                "vehicle_entry_details"     : vehicle_details,
+                "srs"                       : list(srs),
+                "total_gallon_collected"    : total_gallon_collected,
+                "total_grease_trap_count"   : total_grease_trap_count,
+            }
+            template_path   =   'gtcc/delivery_order_pdf.html'
+            destination     =   'media/gtcc_delivery_orders'
+            filename        =   f'{vehicle_entry_details.txn_id}.pdf'
+            file_path       =   destination + "/" + filename
+            generate_do     =   generate_pdf(template_path, destination, pdf_content, file_path)
+            if generate_do:
+                DeliveryOrderReport.objects.create(
+                    vehicle_entry_details = vehicle_entry_details,
+                    pdf_content = pdf_content
+                )
+                vehicle_entry_details.delivery_order_file  = file_path
+                send_delivery_order_mail(gtcc, file_path)
         vehicle_entry_details.save()
         try:
             gate = Gate.objects.get(pk=2)
@@ -1693,7 +1691,6 @@ class OperatorDumpingAcceptanceView(APIView):
         except Gate.DoesNotExist:
             pass
         jobs = allJobs_list_of_driver_for_operator(vehicle_entry_details.id)
-        vehicle_details = VehicleEntryDetailsSerializer(vehicle_entry_details).data
         data = {
                     'vehicle_details'   : vehicle_details,
                     'jobs'              : jobs
@@ -1734,8 +1731,8 @@ class GeneratePdf(APIView):
             total_dumping_fee += sr.dumping_vehicledetails.total_dumping_fee
             total_grease_trap_count += sr.grease_trap_count
         pdf_content = {
-                "vehicle_entry_details" :vehicle_entry_details,
-                "srs"                   : srs,
+                "vehicle_entry_details" :VehicleEntryDetailsSerializer(vehicle_entry_details).data,
+                "srs"                   : list(srs),
                 "total_gallon_dumped"   : total_gallon_dumped,
                 "total_dumping_fee"     : total_dumping_fee,
                 "total_grease_trap_count" : total_grease_trap_count
@@ -1746,6 +1743,10 @@ class GeneratePdf(APIView):
         file_path       =   destination + "/" + filename
         do = generate_pdf(template_path, destination, pdf_content, file_path)
         if do:
+            DeliveryOrderReport.objects.create(
+                vehicle_entry_details = vehicle_entry_details,
+                pdf_content = pdf_content
+            )
             subject         = "Delivery Order"
             template_name   = 'gtcc/delivery_order_mail.html'
             context = {}
