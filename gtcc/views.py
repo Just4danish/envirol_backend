@@ -1771,7 +1771,7 @@ class WalletDetails(APIView):
         current_wallet_balance_in_dirhams   = data.credit_available
         current_wallet_balance_in_gallons   = current_wallet_balance_in_dirhams / gallons_divsion
         total_paid_amount                   = PaymentDetail.objects.filter(gtcc=gtcc, payment_type='Credit').aggregate(Sum('amount'))
-        total_paid_amount_in_dirhams        = total_paid_amount['amount__sum']
+        total_paid_amount_in_dirhams        = total_paid_amount['amount__sum'] if total_paid_amount['amount__sum'] else 0 
         total_paid_amount_in_gallons        = total_paid_amount_in_dirhams / gallons_divsion
         total_discharged_amount_in_dirhams  = total_paid_amount_in_dirhams - current_wallet_balance_in_dirhams
         total_discharged_amount_in_gallons  = total_paid_amount_in_gallons - current_wallet_balance_in_gallons

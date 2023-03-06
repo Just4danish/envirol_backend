@@ -208,8 +208,7 @@ class SendEmail(threading.Thread):
         self.html_message   = html_message
         self.sender         = settings.SENDER_EMAIL
         self.receivers      = receivers
-        if attachment:
-            self.attachment = attachment
+        self.attachment     = attachment
         threading.Thread.__init__(self)
     def run(self):
         message = EmailMessage(self.subject, self.html_message,self.sender,self.receivers)
