@@ -56,7 +56,7 @@ urlpatterns = [
     path('import_excel', ExcelOrCSVUploadView.as_view()),
     path('validate_import_gtcc', ValidateImportGTCC.as_view()),
     path('import_gtcc', ImportGTCC.as_view()),
-    path('GeneratePdf', GeneratePdf.as_view()),
+    path('GeneratePdf/<int:vehicledetails_id>', GeneratePdf.as_view()),
 ]
 
 #Dashboard API URLS

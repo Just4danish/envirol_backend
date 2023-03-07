@@ -30,13 +30,7 @@ tr{
         </tr>
         <tr>
           <td >
-            <img
-            style="width: 40%; "
-            height=""
-          
-            src="C:\Users\ABACI-02\Downloads\Envirol.png"    
-            />
-            {% load static %} <img src="{% static "envirol_backend/media/logo.png" %}" alt="logo" />
+            {% load static %} <img style="width: 40%;" src="{% static "envirol_backend/media/logo.png" %}" alt="logo" />
           </td>
 
           <td style="width: 40%; text-align: right; ">
@@ -76,12 +70,12 @@ tr{
                   <tr>
                     <td style="padding: 3px; width: 40%;">Order Date </td>
                     <td>:</td>
-                    <td style="text-align: right;">{{vehicle_entry_details.exit_time|date:"m/d/Y"}}</td>
+                    <td style="text-align: right;">{{vehicle_entry_details.order_date}}</td>
                   </tr>
                   <tr>
                     <td style="padding: 3px; width: 40%;">Order Time</td>
                     <td>:</td>
-                    <td style="text-align: right;">{{vehicle_entry_details.exit_time|date:"h:i A"}}</td>
+                    <td style="text-align: right;">{{vehicle_entry_details.order_time}}</td>
                   </tr>
 
                     </td>
@@ -107,23 +101,23 @@ tr{
                 </tr>
                 
                 <tr >
-                  <td >{{vehicle_entry_details.gtcc.establishment_name}}</td>
+                  <td >{{vehicle_entry_details.gtcc}}</td>
                   <td style=" width:10%;" >Vehicle</td>
                   <td style=" width:2%;">:</td>
-                  <td style=" width:20%;" >{{vehicle_entry_details.vehicle.vehicle_no}}</td>
+                  <td style=" width:20%;" >{{vehicle_entry_details.vehicle}}</td>
                 </tr>
                 <tr>
-                  <td >{{vehicle_entry_details.gtcc.phone_no}}</td>
+                  <td >{{vehicle_entry_details.gtcc_phone_no}}</td>
                   <td  >Driver</td>
                   <td>:</td>
-                  <td >{{vehicle_entry_details.driver.full_name}}</td>
+                  <td >{{vehicle_entry_details.driver}}</td>
                   
                 </tr>
                 <tr style="padding-bottom: 3px;">
-                  <td >{{vehicle_entry_details.gtcc.office_email}}</td>
+                  <td >{{vehicle_entry_details.gtcc_office_email}}</td>
                   <td >Operator</td>
                   <td>:</td>
-                  <td>{{vehicle_entry_details.operator.full_name}}</td>
+                  <td>{{vehicle_entry_details.operator}}</td>
                  
                 </tr>
                 
@@ -157,17 +151,30 @@ tr{
                   </tr>
                   {% for sr in srs %}
                   <tr>
-                    <td >#{{sr.id}} {{sr.entity.establishment_name}} requested on {{sr.created_date|date:"m/d/Y h:i A"}}</td>
-                    <td>{{sr.collection_completion_time|date:"m/d/Y h:i A"}}</td>
-                    <td>{{sr.grease_trap_count}}</td>
-                    <td >{{sr.total_gallon_collected}}</td>
+                    <td>#{{sr.id}} {{sr.entity}} requested on {{sr.created_date}}</td>
+                    <td>{{sr.collection_completion_time}}</td>
+                    <td style="text-align: right;">{{sr.grease_trap_count}}</td>
+                    <td style="text-align: right;">{{sr.total_gallon_collected}}</td>
+                  </tr>
+                  {% endfor %}
+                  {% for coupon in coupons %}
+                  <tr>
+                    <td>#{{coupon.coupon_no}} {{coupon.name}}</td>
+                    <td>{{coupon.returned_on}}</td>
+                    <td style="text-align: right;">1</td>
+                    <td style="text-align: right;">{{coupon.total_gallon_collected}}</td>
                   </tr>
                   {% endfor %}
                   <tr>
                     <td ></td>
                     <td>Total</td>
-                    <td >{{total_grease_trap_count}}</td>
-                    <td >{{total_gallon_collected}}</td>
+                    <td style="text-align: right;">{{total_grease_trap_count}}</td>
+                    <td style="text-align: right;">{{total_gallon_collected}}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">
+                      Total Discharge Fee : {{total_dumping_fee}} ({{total_dumping_fee_in_words}})
+                    </td>
                   </tr>
                   <tr>
                     <td style = "padding-top: 50px; padding-bottom: 2px;" height="60" colspan="4">Authorized signatory</td>

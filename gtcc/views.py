@@ -7,7 +7,7 @@ from masters.models import Unitprice, Gate, RFIDTappingLog
 from users.models import SendEmail
 from masters.views import update_gate_last_query_time, update_rfid_tapping_log
 from django.template.loader import render_to_string
-from abacimodules.abacifunctions import generate_pdf
+from abacimodules.abacifunctions import generate_pdf, num2words
 from .serializers import *
 from django.http import Http404,HttpResponse
 from django.db import transaction
@@ -1624,24 +1624,38 @@ class OperatorDumpingAcceptanceView(APIView):
             gtcc.save()
         coupons = Coupon.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id, status='Scanned')
         coupon_ids_array = []
+        pdf_coupon_array = []
         for coupon in coupons:
             coupon_ids_array.append(coupon.id)
             if operator_acceptance == 'Accepted':
+                pdf_coupon_array.append({
+                    "coupon_no"                     : coupon.coupon_no,
+                    "name"                          : "- Coupon",
+                    "returned_on"                   : coupon.returned_on.strftime("%m/%d/%Y %I:%M %p"),
+                    "total_gallon_collected"        : f'{coupon.total_gallons:,}'
+                })
                 coupon.status = 'Used'
                 coupon.save()
         # Now we need to update all the SRs as dumber
         srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver', 'entity', 'dumping_vehicledetails')
         sr_ids_array = []
-        total_gallon_collected = 0
+        pdf_sr_array = []
         total_grease_trap_count = 0
         for sr in srs:
             sr_ids_array.append(sr.id)
             if operator_acceptance == 'Accepted':
-                total_gallon_collected += sr.total_gallon_collected
+                pdf_sr_array.append({
+                    "id"                            : sr.id,
+                    "entity"                        : sr.entity.establishment_name,
+                    "created_date"                  : sr.created_date.strftime("%m/%d/%Y %I:%M %p"),
+                    "collection_completion_time"    : sr.collection_completion_time.strftime("%m/%d/%Y %I:%M %p"),
+                    "grease_trap_count"             : sr.grease_trap_count,
+                    "total_gallon_collected"        : f'{sr.total_gallon_collected:,}'
+                })
                 total_grease_trap_count += sr.grease_trap_count
-                driver              = sr.driver
-                sr.status           = 'Discharged'
-                sr.discharge_time   = today
+                driver                  = sr.driver
+                sr.status               = 'Discharged'
+                sr.discharge_time       = today
                 sr.save()
                 ServiceRequestLog.objects.create(
                     service_request     = sr,
@@ -1665,9 +1679,22 @@ class OperatorDumpingAcceptanceView(APIView):
             if gtcc.credit_available < 1500:
                 send_low_balance_mail(gtcc)
             pdf_content = {
-                "vehicle_entry_details"     : vehicle_entry_details,
-                "srs"                       : srs,
-                "total_gallon_collected"    : total_gallon_collected,
+                "vehicle_entry_details"     : {
+                    "txn_id"            : vehicle_entry_details.txn_id,
+                    "order_date"        : vehicle_entry_details.exit_time.strftime("%m/%d/%Y"),
+                    "order_time"        : vehicle_entry_details.exit_time.strftime("%I:%M %p"),
+                    "gtcc"              : vehicle_entry_details.gtcc.establishment_name,
+                    "vehicle"           : vehicle_entry_details.vehicle.vehicle_no,
+                    "gtcc_phone_no"     : vehicle_entry_details.gtcc.phone_no,
+                    "driver"            : vehicle_entry_details.driver.full_name,
+                    "gtcc_office_email" : vehicle_entry_details.gtcc.office_email,
+                    "operator"          : vehicle_entry_details.operator.full_name,
+                },
+                "srs"                       : pdf_sr_array,
+                "coupons"                   : pdf_coupon_array,
+                "total_gallon_collected"    : f'{vehicle_entry_details.total_gallon_collected:,}',
+                "total_dumping_fee"         : f'{vehicle_entry_details.total_dumping_fee:,}',
+                "total_dumping_fee_in_words": num2words(vehicle_entry_details.total_dumping_fee),
                 "total_grease_trap_count"   : total_grease_trap_count,
             }
             template_path   =   'gtcc/delivery_order_pdf.html'
@@ -1676,12 +1703,14 @@ class OperatorDumpingAcceptanceView(APIView):
             file_path       =   destination + "/" + filename
             generate_do     =   generate_pdf(template_path, destination, pdf_content, file_path)
             if generate_do:
-                # DeliveryOrderReport.objects.create(
-                #     vehicle_entry_details = vehicle_entry_details,
-                #     pdf_content = pdf_content
-                # )
+                DeliveryOrderReport.objects.create(
+                    vehicle_entry_details = vehicle_entry_details,
+                    pdf_content = pdf_content,
+                    created_by = request.user
+                )
                 vehicle_entry_details.delivery_order_file  = file_path
-                send_delivery_order_mail(gtcc, file_path)
+                subject  = "Delivery Order #"+vehicle_entry_details.txn_id
+                send_delivery_order_mail(gtcc, file_path, subject)
         vehicle_entry_details.save()
         try:
             gate = Gate.objects.get(pk=2)
@@ -1708,8 +1737,7 @@ def send_low_balance_mail(gtcc):
     receivers       = [gtcc.active_contact_person.email, gtcc.office_email]
     SendEmail(subject, html_message, receivers).start()
 
-def send_delivery_order_mail(gtcc, file):
-    subject         = "Delivery Order"
+def send_delivery_order_mail(gtcc, file, subject):
     template_name   = 'gtcc/delivery_order_mail.html'
     context = {}
     html_message    = render_to_string(template_name, context)
@@ -1720,22 +1748,53 @@ def send_delivery_order_mail(gtcc, file):
 class GeneratePdf(APIView):
     
     permission_classes = [AllowAny]
-    def get(self, request, *args, **kwargs):
-        vehicle_entry_details = VehicleEntryDetails.objects.get(id = 1)
-        srs = ServiceRequest.objects.filter(pk = 1).select_related('driver')
+    def get(self, request, vehicledetails_id):
+        vehicle_entry_details = VehicleEntryDetails.objects.get(id = vehicledetails_id)
+        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
+        coupons = Coupon.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id, status='Used')
+        pdf_coupon_array = []
+        for coupon in coupons:
+            pdf_coupon_array.append({
+                    "coupon_no"                     : coupon.coupon_no,
+                    "name"                          : "- Coupon",
+                    "returned_on"                   : coupon.returned_on.strftime("%m/%d/%Y %I:%M %p"),
+                    "total_gallon_collected"        : f'{coupon.total_gallons:,}'
+                })
+                
         total_gallon_dumped = 0
         total_dumping_fee = 0
         total_grease_trap_count = 0
+        pdf_sr_array = []
         for sr in srs:
+            pdf_sr_array.append({
+                    "id"                            : sr.id,
+                    "entity"                        : sr.entity.establishment_name,
+                    "created_date"                  : sr.created_date.strftime("%m/%d/%Y %I:%M %p"),
+                    "collection_completion_time"    : sr.collection_completion_time.strftime("%m/%d/%Y %I:%M %p"),
+                    "grease_trap_count"             : sr.grease_trap_count,
+                    "total_gallon_collected"        : f'{sr.total_gallon_collected:,}'
+                })
             total_gallon_dumped += sr.dumping_vehicledetails.total_gallon_dumped
             total_dumping_fee += sr.dumping_vehicledetails.total_dumping_fee
             total_grease_trap_count += sr.grease_trap_count
         pdf_content = {
-                "vehicle_entry_details" :VehicleEntryDetailsSerializer(vehicle_entry_details).data,
-                "srs"                   : list(srs),
-                "total_gallon_dumped"   : total_gallon_dumped,
-                "total_dumping_fee"     : total_dumping_fee,
-                "total_grease_trap_count" : total_grease_trap_count
+                "vehicle_entry_details"     : {
+                    "txn_id"            : vehicle_entry_details.txn_id,
+                    "order_date"        : vehicle_entry_details.exit_time.strftime("%m/%d/%Y"),
+                    "order_time"        : vehicle_entry_details.exit_time.strftime("%I:%M %p"),
+                    "gtcc"              : vehicle_entry_details.gtcc.establishment_name,
+                    "vehicle"           : vehicle_entry_details.vehicle.vehicle_no,
+                    "gtcc_phone_no"     : vehicle_entry_details.gtcc.phone_no,
+                    "driver"            : vehicle_entry_details.driver.full_name,
+                    "gtcc_office_email" : vehicle_entry_details.gtcc.office_email,
+                    "operator"          : vehicle_entry_details.operator.full_name,
+                },
+                "srs"                       : pdf_sr_array,
+                "coupons"                   : pdf_coupon_array,
+                "total_gallon_collected"    : f'{vehicle_entry_details.total_gallon_collected:,}',
+                "total_dumping_fee"         : f'{vehicle_entry_details.total_dumping_fee:,}',
+                "total_dumping_fee_in_words": num2words(vehicle_entry_details.total_dumping_fee),
+                "total_grease_trap_count"   : total_grease_trap_count,
             }
         template_path   =   'gtcc/delivery_order_pdf.html'
         destination     =   'media/gtcc_delivery_orders'
@@ -1743,11 +1802,19 @@ class GeneratePdf(APIView):
         file_path       =   destination + "/" + filename
         do = generate_pdf(template_path, destination, pdf_content, file_path)
         if do:
-            DeliveryOrderReport.objects.create(
-                vehicle_entry_details = vehicle_entry_details,
-                pdf_content = pdf_content
-            )
-            subject         = "Delivery Order"
+            try:
+                do = DeliveryOrderReport.objects.get(vehicle_entry_details=vehicle_entry_details)
+                do.pdf_content = pdf_content
+                do.modified_by_id = 1
+                do.modified_date = timezone.now()
+                do.save()
+            except DeliveryOrderReport.DoesNotExist:
+                DeliveryOrderReport.objects.create(
+                    vehicle_entry_details = vehicle_entry_details,
+                    pdf_content = pdf_content,
+                    created_by_id = 1
+                )
+            subject         = "Delivery Order #"+vehicle_entry_details.txn_id
             template_name   = 'gtcc/delivery_order_mail.html'
             context = {}
             html_message    = render_to_string(template_name, context)

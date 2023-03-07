@@ -785,6 +785,9 @@ class ManageEntityGreaseTrap(generics.ListAPIView):
                     'entity__subarea__sub_area',
                     'entity__category__main_category',
                     'entity__sub_category__sub_category',
+                    'last_cleaning_date',
+                    'next_cleaning_date',
+                    'cleaning_frequency',
                 ]
     search_fields   = fields
     ordering_fields = fields
@@ -822,6 +825,9 @@ class ManageEntityGreaseTrap(generics.ListAPIView):
         grease_trap__description = self.request.query_params.get('grease_trap__description')
         if grease_trap__description is not None:
             queryset = queryset.filter(grease_trap__description__icontains=grease_trap__description)
+        cleaning_frequency = self.request.query_params.get('cleaning_frequency')
+        if cleaning_frequency is not None:
+            queryset = queryset.filter(cleaning_frequency=cleaning_frequency)
         start_date  = self.request.query_params.get('start_date')
         end_date    = self.request.query_params.get('end_date')
         if start_date != None and end_date != None:
@@ -843,6 +849,9 @@ class ManageEntityGreaseTrap(generics.ListAPIView):
                                 'Sub Area',
                                 'Main Category',
                                 'Sub Category',
+                                'Last Cleaning Date',
+                                'Next Cleaning Date',
+                                'Cleaning Frequency',
                             ]
         df_records.set_axis(columns_records, axis=1, inplace=True)
         return df_records
@@ -869,7 +878,10 @@ class ManageEntityGreaseTrap(generics.ListAPIView):
                 'Area' : 'Area',
                 'Sub Area' : 'Sub Area',
                 'Main Category' : 'Main Category',
-                'Sub Category' : 'Sub Category'
+                'Sub Category' : 'Sub Category',
+                'Last Cleaning Date' : 'Last Cleaning Date',
+                'Next Cleaning Date' : 'Next Cleaning Date',
+                'Cleaning Frequency' : 'Cleaning Frequency'
             }
             data = {
                 "header" : header,

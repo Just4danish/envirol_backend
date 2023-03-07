@@ -179,7 +179,10 @@ class VehicleEntryDetails(models.Model):
 class DeliveryOrderReport(models.Model):
     vehicle_entry_details = models.ForeignKey(VehicleEntryDetails, related_name='do_vehicle_entry_details', on_delete=models.CASCADE)
     pdf_content = models.JSONField()
+    created_by = models.ForeignKey(Account, related_name='do_created_by', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
+    modified_by = models.ForeignKey(Account, related_name='do_modified_by', on_delete=models.CASCADE, null=True)
+    modified_date = models.DateTimeField(null=True)
 
 class EditCouponLog(models.Model):
     coupon = models.ForeignKey(Coupon, related_name='edited_coupon', on_delete=models.CASCADE)
