@@ -1697,6 +1697,7 @@ class OperatorDumpingAcceptanceView(APIView):
         vehicle_entry_details.job_log               = json.dumps(job_log)
         vehicle_entry_details.remarks               = data['remarks']
         vehicle_entry_details.current_status        = "Exited"
+        vehicle_entry_details.save()
         if operator_acceptance == 'Accepted':
             if gtcc.credit_available < 1500:
                 send_low_balance_mail(gtcc)
@@ -1719,21 +1720,7 @@ class OperatorDumpingAcceptanceView(APIView):
                 "total_dumping_fee_in_words": num2words(vehicle_entry_details.total_dumping_fee),
                 "total_grease_trap_count"   : total_grease_trap_count,
             }
-            template_path   =   'gtcc/delivery_order_pdf.html'
-            destination     =   'media/gtcc_delivery_orders'
-            filename        =   f'{vehicle_entry_details.txn_id}.pdf'
-            file_path       =   destination + "/" + filename
-            generate_do     =   generate_pdf(template_path, destination, pdf_content, file_path)
-            if generate_do:
-                DeliveryOrderReport.objects.create(
-                    vehicle_entry_details = vehicle_entry_details,
-                    pdf_content = pdf_content,
-                    created_by = request.user
-                )
-                vehicle_entry_details.delivery_order_file  = file_path
-                subject  = "Delivery Order #"+vehicle_entry_details.txn_id
-                send_delivery_order_mail(gtcc, file_path, subject)
-        vehicle_entry_details.save()
+            generate_delivery_order(vehicle_entry_details, pdf_content, request.user)
         try:
             gate = Gate.objects.get(pk=2)
             gate.gate_status = 'Open'
@@ -1747,6 +1734,31 @@ class OperatorDumpingAcceptanceView(APIView):
                     'jobs'              : jobs
                 }
         return Response(data, status=status.HTTP_200_OK)
+
+def generate_delivery_order(vehicle_entry_details, pdf_content, user, send_mail = True):
+    template_path   =   'gtcc/delivery_order_pdf.html'
+    destination     =   'media/gtcc_delivery_orders'
+    filename        =   f'{vehicle_entry_details.txn_id}.pdf'
+    file_path       =   destination + "/" + filename
+    generate_do     =   generate_pdf(template_path, destination, pdf_content, file_path)
+    if generate_do:
+        try:
+            do = DeliveryOrderReport.objects.get(vehicle_entry_details=vehicle_entry_details)
+            do.pdf_content      = pdf_content
+            do.modified_by      = user
+            do.modified_date    = timezone.now()
+            do.save()
+        except DeliveryOrderReport.DoesNotExist:
+            DeliveryOrderReport.objects.create(
+                vehicle_entry_details   = vehicle_entry_details,
+                pdf_content             = pdf_content,
+                created_by              = user
+            )
+        vehicle_entry_details.delivery_order_file  = file_path
+        vehicle_entry_details.save()
+        subject  = "Delivery Order #"+vehicle_entry_details.txn_id
+        if send_mail:
+            send_delivery_order_mail(vehicle_entry_details.gtcc, file_path, subject)
 
 def send_low_balance_mail(gtcc):
     subject         = "Low Balance"
@@ -1771,9 +1783,9 @@ class GeneratePdf(APIView):
     
     permission_classes = [AllowAny]
     def get(self, request, vehicledetails_id):
-        vehicle_entry_details = VehicleEntryDetails.objects.get(id = vehicledetails_id)
-        srs = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
-        coupons = Coupon.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id, status='Used')
+        vehicle_entry_details   = VehicleEntryDetails.objects.get(id = vehicledetails_id)
+        srs                     = ServiceRequest.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id).select_related('driver')
+        coupons                 = Coupon.objects.filter(dumping_vehicledetails_id = vehicle_entry_details.id, status='Used')
         pdf_coupon_array = []
         for coupon in coupons:
             pdf_coupon_array.append({
@@ -1818,30 +1830,7 @@ class GeneratePdf(APIView):
                 "total_dumping_fee_in_words": num2words(vehicle_entry_details.total_dumping_fee),
                 "total_grease_trap_count"   : total_grease_trap_count,
             }
-        template_path   =   'gtcc/delivery_order_pdf.html'
-        destination     =   'media/gtcc_delivery_orders'
-        filename        =   "gtcc.pdf"
-        file_path       =   destination + "/" + filename
-        do = generate_pdf(template_path, destination, pdf_content, file_path)
-        if do:
-            try:
-                do = DeliveryOrderReport.objects.get(vehicle_entry_details=vehicle_entry_details)
-                do.pdf_content = pdf_content
-                do.modified_by_id = 1
-                do.modified_date = timezone.now()
-                do.save()
-            except DeliveryOrderReport.DoesNotExist:
-                DeliveryOrderReport.objects.create(
-                    vehicle_entry_details = vehicle_entry_details,
-                    pdf_content = pdf_content,
-                    created_by_id = 1
-                )
-            subject         = "Delivery Order #"+vehicle_entry_details.txn_id
-            template_name   = 'gtcc/delivery_order_mail.html'
-            context = {}
-            html_message    = render_to_string(template_name, context)
-            receivers       = ["pakhil77@gmail.com"]
-            SendEmail(subject, html_message, receivers, file_path).start()
+        generate_delivery_order(vehicle_entry_details, pdf_content, Account.objects.get(pk=1))
 
 #Dashboard API
 class WalletDetails(APIView):
