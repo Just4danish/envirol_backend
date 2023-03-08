@@ -109,7 +109,6 @@ def smart_search_response_creator(**kwargs):
     limit = int(kwargs.get('limit', [10])[0])
     page = int(kwargs.get('page', [1])[0])
     order_by = kwargs.get('ordering', ['ASC'])[0]
-    print(order_by)
     if (search_type == 'results'):
         search_fields = search_table_details['fields']
         command =   f"SELECT {search_fields}, count(*) OVER() AS count"\
@@ -138,7 +137,6 @@ def smart_search_response_creator(**kwargs):
             f" WHERE LOWER({search_table_details['cell_name']})"\
             f" LIKE '{search_text}'"\
             f" {filters}"
-        print(command)
         response = {
             'count' : get_data_from_db(command)[0][0]
         }

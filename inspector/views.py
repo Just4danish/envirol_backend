@@ -55,7 +55,6 @@ class Locations(APIView):
                 'error': 'Type of location shall be specified !'
             }
             return Response(response, status=status.HTTP_404_NOT_FOUND)
-            print(type_of_loc)
         if type_of_loc not in ['zone', 'area', 'subarea']:
             response = {
                 'error': 'Invalid type of location !'
@@ -68,7 +67,6 @@ class Locations(APIView):
 class EntityUpdateView(APIView):
     def post(self,request, pk):
         data = request.data
-        print(data)
         entity = Entity.objects.filter(pk=pk)
         if len(entity) == 0:
             return Response({'error' : 'Invalid Entity ID'}, status=status.HTTP_404_NOT_FOUND)

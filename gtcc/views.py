@@ -1326,7 +1326,6 @@ class RFIDDetectionForVehicle(APIView):
             try:
                 gate = Gate.objects.get(gate_id=gate_id)
                 update_gate_last_query_time(gate, 'RFID Tapping')
-                print(gate.remote_status)
             except Gate.DoesNotExist:
                 rfid_response = 'Invalid gate'
                 update_rfid_tapping_log(tapping_log, 'Failed', rfid_response)
@@ -1830,7 +1829,7 @@ class GeneratePdf(APIView):
                 "total_dumping_fee_in_words": num2words(vehicle_entry_details.total_dumping_fee),
                 "total_grease_trap_count"   : total_grease_trap_count,
             }
-        generate_delivery_order(vehicle_entry_details, pdf_content, Account.objects.get(pk=1))
+        generate_delivery_order(vehicle_entry_details, pdf_content, Account.objects.get(pk=1), send_mail = False)
 
 #Dashboard API
 class WalletDetails(APIView):

@@ -48,7 +48,7 @@ class EntityPostSerializer(serializers.ModelSerializer):
                 inviting_key        =   get_random_string(64).lower(),
                 invited_date        =   timezone.now(),
                 invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),)
-        active_contact_person.send_invitation()
+        # active_contact_person.send_invitation()
         entity.active_contact_person = active_contact_person
         entity.save()
         return entity
@@ -113,7 +113,7 @@ class EntityPostSerializer(serializers.ModelSerializer):
                 user.invite_expiry_date  =   timezone.now() + datetime.timedelta(3)
                 user.modified_by         =   validated_data.get('modified_by')
                 user.save()
-                user.send_invitation()
+                # user.send_invitation()
             else:
                 user.user_status         =   'Deactivated'
                 user.modified_by         =   validated_data.get('modified_by')
@@ -134,7 +134,7 @@ class EntityPostSerializer(serializers.ModelSerializer):
                             inviting_key        =   get_random_string(64).lower(),
                             invited_date        =   timezone.now(),
                             invite_expiry_date  =   (timezone.now() + datetime.timedelta(3)),)
-                active_contact_person.send_invitation()
+                # active_contact_person.send_invitation()
                 instance.active_contact_person = active_contact_person
                 instance.save()
         return instance
