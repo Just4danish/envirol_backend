@@ -795,13 +795,20 @@ class GTCCServiceRequestDetails(generics.ListAPIView):
                         'foodwatch_srid',
                         'entity__establishment_name',
                         'entity__area__area',
+                        'entity__subarea__sub_area',
                         'entity__zone__zone_name',
+                        'entity__category__main_category',
+                        'entity__sub_category__sub_category',
                         'grease_trap_count',
                         'total_gallon_collected',
                         'vehicle__vehicle_no',
+                        'driver__full_name',
                         'dumping_vehicledetails__txn_id',
                         'created_date__date',
-                        'status'
+                        'collection_completion_time__date',
+                        'discharge_time__date',
+                        'status',
+                        'initiator'
                         ]
     search_fields   = fields
     ordering_fields = fields
@@ -864,14 +871,21 @@ class GTCCServiceRequestDetails(generics.ListAPIView):
                                 'SR No',
                                 'Foodwatch Ref', 
                                 'Restaurant Name',
-                                'Area', 
+                                'Area',
+                                'Sub Area', 
                                 'Zone', 
+                                'Category',
+                                'Sub Category',
                                 'No.of Traps', 
                                 'Total Gallon Collected',
                                 'Assigned Vehicle',
+                                'Driver',
                                 'Discharge TXN',
                                 'Created Date',
+                                'Collection Completion Time',
+                                'Discharge Time',
                                 'Status',
+                                'Initiator'
                             ]
         df_records.set_axis(columns_records, axis=1, inplace=True)
         return df_records
@@ -893,13 +907,20 @@ class GTCCServiceRequestDetails(generics.ListAPIView):
                 'Foodwatch Ref' : 'Foodwatch Ref',
                 'Restaurant Name' : 'Restaurant Name',
                 'Area' : 'Area',
+                'Sub Area' : 'Sub Area',
                 'Zone' : 'Zone',
+                'Category' : 'Category',
+                'Sub Category' : 'Sub Category',
                 'No.of Traps' : 'No.of Traps',
                 'Total Gallon Collected' : 'Total Gallon Collected',
                 'Assigned Vehicle' : 'Assigned Vehicle',
+                'Driver' : 'Driver',
                 'Discharge TXN' : 'Discharge TXN',
                 'Created Date' : 'Created Date',
+                'Collection Completion Time' : 'Collection Completion Time',
+                'Discharge Time' : 'Discharge Time',
                 'Status' : 'Status',
+                'Initiator' : 'Initiator',
             }
             data = {
                 "header" : header,
@@ -1015,8 +1036,9 @@ class UpdateServiceRequest(APIView):
             )
             entity_grease_traps = ServiceRequestDetail.objects.filter(service_request=service_request, status='Completed').select_related('grease_trap')
             for entity_grease_trap in entity_grease_traps:
-                entity_grease_trap.last_cleaning_date = datetime.date.today()
-                entity_grease_trap.save()
+                grease_trap = entity_grease_trap.grease_trap
+                grease_trap.last_cleaning_date = datetime.date.today()
+                grease_trap.save()
             data = allJobs_list_for_driver(service_request.vehicle.id)
             return Response(data, status=status.HTTP_200_OK)
 

@@ -301,43 +301,35 @@ class ServiceRequestPostSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("There is no GTCC assigned for this entity")
         
         if active_gtcc_detail.status == 'Active':
-            service_request = ServiceRequest.objects.create(**validated_data, entity_gtcc = active_gtcc_detail, grease_trap_count = len(grease_traps))
-            driver          = service_request.driver
+            sr_list = []
             for grease_trap in grease_traps:
+                service_request = ServiceRequest.objects.create(**validated_data, entity_gtcc = active_gtcc_detail, grease_trap_count = 1)
+                driver          = service_request.driver
                 grease_trap_data = EntityGreaseTrap.objects.get(pk=grease_trap)
                 ServiceRequestDetail.objects.create(
                     service_request = service_request,
                     grease_trap = grease_trap_data,
                     status = sr_grease_trap_status
                 )
-            ServiceRequestLog.objects.create(
-                service_request = service_request,
-                type = "Initiated",
-                log = "Job initiated from "+establishment_name,
-                created_by = created_by
-            )
-            if sr_grease_trap_status == 'Completed':
                 ServiceRequestLog.objects.create(
                     service_request = service_request,
-                    vehicle = service_request.vehicle,
-                    driver = driver,
-                    type = "Job Completed",
-                    log = f"This job has been completed by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
+                    type = "Initiated",
+                    log = "Job initiated from "+establishment_name,
                     created_by = created_by
                 )
-            return service_request
+                if sr_grease_trap_status == 'Completed':
+                    ServiceRequestLog.objects.create(
+                        service_request = service_request,
+                        vehicle = service_request.vehicle,
+                        driver = driver,
+                        type = "Job Completed",
+                        log = f"This job has been completed by Mr.{driver.full_name} at the {entity.establishment_name} restaurant",
+                        created_by = created_by
+                    )
+                sr_list.append(service_request)
+            return sr_list
         else:
             raise serializers.ValidationError("There is no active GTCC exist for this entity")
-
-class ServiceRequestListSerializer(serializers.ModelSerializer):
-    entity = EntityLimitedListSerializer()
-    entity_gtcc = EntityGTCCLimitedListSerializer()
-    vehicle = VehicleLimitedListSerializer()
-    driver = UserLimitedDetailSerializer()
-    dumping_vehicledetails = VehicleEntryDetailsLimitedSerializer()
-    class Meta:
-        model = ServiceRequest
-        exclude = ['created_by', 'modified_by']
 
 class ServiceRequestImageListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -350,6 +342,17 @@ class ServiceRequestDetailListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceRequestDetail
         exclude = ['service_request', 'modified_by', 'modified_date']
+
+class ServiceRequestListSerializer(serializers.ModelSerializer):
+    entity = EntityLimitedListSerializer()
+    entity_gtcc = EntityGTCCLimitedListSerializer()
+    vehicle = VehicleLimitedListSerializer()
+    driver = UserLimitedDetailSerializer()
+    dumping_vehicledetails = VehicleEntryDetailsLimitedSerializer()
+    service_request = ServiceRequestDetailListSerializer(many = True)
+    class Meta:
+        model = ServiceRequest
+        exclude = ['created_by', 'modified_by']
 
 class ServiceRequestSerializer(serializers.ModelSerializer):
     entity = EntityLimitedListSerializer()

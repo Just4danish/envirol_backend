@@ -769,7 +769,7 @@ class ServiceRequestList(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         data = serializer.save(created_by = request.user)
-        return Response(ServiceRequestListSerializer(data).data, status=status.HTTP_200_OK)
+        return Response(ServiceRequestListSerializer(data, many=True).data, status=status.HTTP_200_OK)
 
 
 class ManageEntityGreaseTrap(generics.ListAPIView):
